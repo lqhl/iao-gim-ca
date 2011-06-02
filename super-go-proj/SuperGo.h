@@ -11,4 +11,11 @@ typedef double VALUE;
 #define BLACK 1
 #define WHITE 2
 
+#define PASS -1
+#define NULL_MOVE -2
+
+enum GameState {
+	WIN, LOSS, UN_PROVEN
+};
+
 #endif

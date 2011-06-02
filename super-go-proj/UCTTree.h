@@ -2,6 +2,7 @@
 #define UCT_TREE_H
 
 #include "UCTNode.h"
+#include "Board.h"
 #include <vector>
 
 using std::vector;
@@ -33,5 +34,9 @@ public:
 	void deleteSubtree(int r);
 
 	void recycleNode(int n);
+
+	// after play in tree, if win-loss is not proven, we need to expand a node
+	// initialize the statistics based on patterns
+	void expandNode(int n, Board* board);
 };
 #endif

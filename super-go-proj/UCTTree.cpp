@@ -30,6 +30,10 @@ void UCTTree::prune(int count) {
 	}
 }
 
+void UCTTree::expandNode(int n, Board* board) {
+
+}
+
 UCTNode* UCTTree::rootNode() {
 	return &node[root];
 }
