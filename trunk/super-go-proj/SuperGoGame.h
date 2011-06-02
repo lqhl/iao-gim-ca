@@ -7,9 +7,12 @@
 #include "UCTTree.h"
 #include "Poco/RWLock.h"
 #include <vector>
+#include <string>
 
+using std::string;
 using std::vector;
 using Poco::RWLock;
+
 
 class SuperGoGame;
 
@@ -25,14 +28,28 @@ public:
 
 	static const int TIME_LIMIT = 10000; // in milliseconds
 
+	/* some configuration parameters */
 	// for each play-in-tree, how many play-out will be simulated
 	int numPlayOut;
 
 	// the number of nodes stored in this game
 	int numNode;
 
+	// time used for searching in the threads, in milliseconds
 	int searchTime;
-	
+
+	// komi
+	int komi;
+
+	// parameters for the RAVE
+	double CInitial, CFinal;
+
+	// parameters for the UCT
+	double CUCT;
+
+	// first play urgency
+	double firstPlayValue;
+
 	GenMoveFunc genMove;
 
 	vector<UCTSearchRunner> workers;
@@ -45,11 +62,15 @@ public:
 
 	Board board;
 
-	SuperGoGame();
+	SuperGoGame(const string& fileName);
 
 	void setPlayer(int player);
 
-	void genMoveUCT(MOVE move);
+	void init();
+
+	// given a move, generate a new move
+	MOVE genMoveUCT(MOVE move);
+
 
 };
 

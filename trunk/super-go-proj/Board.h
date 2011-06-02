@@ -17,9 +17,11 @@ public:
 
 	Board(int size);
 
+	int getLevel();
+
 	void execute(MOVE move);
 
-	void rollBack(MOVE move);
+	void rollBack(int level);
 
 };
 

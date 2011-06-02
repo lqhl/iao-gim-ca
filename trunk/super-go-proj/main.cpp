@@ -49,6 +49,11 @@ void testThread() {
 	thread2.start(runnable2);
 	thread.join();
 	thread2.join();
+
+	std::cout << "again\n";
+
+	thread.start(runnable2);
+	thread.join();
 }
 
 void testLog() {
@@ -98,5 +103,12 @@ int main(int argc, char** argv)
 {
 	testThread();
 	system("pause");
+
+	// SuperGoGame* game = new SuperGoGame("super-go.config");
+	// game->init();
+	// game->setPlayer(BLACK);
+	// while( receive a new move k) {m = game->genMove(k); send m; }
+
+
 	return 0;
 }

@@ -4,6 +4,7 @@
 Board::Board() {
 	boardSize = -1;
 }
+
 Board::Board(int size) {
 	int n = (size+1) * (size+1);
 	this->boardSize = size;
@@ -11,6 +12,10 @@ Board::Board(int size) {
 	this->board = new int[n];
 	this->steps = 0;
 	for(int i=0; i<n; ++i) board[i] = EMPTY;
+}
+
+int Board::getLevel() {
+	return steps;
 }
 
 void Board::execute(MOVE move) {
@@ -30,12 +35,13 @@ void Board::execute(MOVE move) {
 	// update the info
 }
 
-void Board::rollBack(MOVE move) {
-	while (steps > move) {
+void Board::rollBack(int level) {
+	while (steps > level) {
 		--steps;
 		int m = moves[steps];
 		assert(board[m] == (((steps & 1) == 0) ? BLACK : WHITE));
 		board[m] = EMPTY;
 	}
+	// update the info
 
 }
