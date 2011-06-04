@@ -2,6 +2,13 @@
 #include "UCTSearchRunner.h"
 #include "SuperGoGame.h"
 #include "Poco/Timestamp.h"
+#include <typeinfo>
+
+using std::exception;
+
+class UnsupportedOperationException : public exception {
+
+};
 
 using Poco::Timestamp;
 UCTSearchRunner::UCTSearchRunner(SuperGoGame* game) : playOutBoard(SuperGoGame::BOARD_SIZE) {
@@ -10,6 +17,7 @@ UCTSearchRunner::UCTSearchRunner(SuperGoGame* game) : playOutBoard(SuperGoGame::
 	this->ravePara2 = 1./game->CFinal;
 	this->CUCT = game->CUCT;
 }
+
 
 void UCTSearchRunner::start() {
 	thread.start(*this);

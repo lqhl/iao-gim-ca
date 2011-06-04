@@ -7,6 +7,7 @@ typedef double COUNT;
 
 typedef double VALUE;
 
+typedef int COLOR;
 #define EMPTY -1
 #define BLACK 1
 #define WHITE 2

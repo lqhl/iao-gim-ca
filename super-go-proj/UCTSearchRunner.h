@@ -36,9 +36,6 @@ public:
 
 	double ravePara1, ravePara2, CUCT;
 
-	
-	//UCTSearchRunner();
-
 	UCTSearchRunner(SuperGoGame* game);
 
 	void searchBoard(int timeLimit, int numPlayOut, Board* board, UCTTree* tree, RWLock* treeLock);
@@ -69,7 +66,6 @@ public:
 	virtual void run();
 
 	void start();
-
 
 };
 

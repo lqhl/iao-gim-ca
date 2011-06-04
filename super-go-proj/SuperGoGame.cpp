@@ -3,8 +3,7 @@
 #include "util/util.h"
 #include <assert.h>
 
-SuperGoGame::SuperGoGame(const string& fileName) : board(BOARD_SIZE) {
-	Util::init(fileName);
+SuperGoGame::SuperGoGame() : board(BOARD_SIZE) {
 
 	numNode = Util::getInt("NumNode");
 
@@ -32,27 +31,31 @@ void SuperGoGame::setPlayer(int player) {
 	this->opponent = player == WHITE ? BLACK : WHITE;
 }
 
-MOVE SuperGoGame::genMoveUCT(MOVE move) {
+void SuperGoGame::rcvMove(MOVE move, COLOR color) {
 	if (move == NULL_MOVE) {
 		assert(board.getLevel() == 0 && player == BLACK);
 	}
 	else {
 		board.execute(move);
 	}
+
+}
+
+MOVE SuperGoGame::genMoveUCT() {
 	for(int i=0; i<NUM_THREAD; ++i) {
-		workers[i].start();
+		workers[i]->start();
 	}
 	for(int i=0; i<NUM_THREAD; ++i) {
-		workers[i].thread.join();
+		workers[i]->thread.join();
 	}
 
-	int n = workers[0].selectChildrenCount(tree, tree->root);
+	int n = workers[0]->selectChildrenCount(tree, tree->root);
 	return tree->node[n].move;
 }
 
 void SuperGoGame::init() {
 	for(int i=0; i<NUM_THREAD; ++i) {
-		workers.push_back(UCTSearchRunner(this));
+		workers.push_back(new UCTSearchRunner(this));
 	}
 
 	tree = new UCTTree(this, numNode);

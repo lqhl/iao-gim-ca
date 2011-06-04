@@ -15,9 +15,11 @@ public:
 
 	PlayOutBoard(int size);
 
-	void execute(MOVE move);
+	void execute(MOVE move, COLOR toPlay);
 
-	void rollBack(MOVE move);
+	MOVE nextMove(COLOR toPlay);
+
+	void rollBack(int level);
 
 	~PlayOutBoard();
 
