@@ -8,8 +8,11 @@
 #include "Poco/FileChannel.h"
 #include "Poco/Message.h"
 #include "Poco/Mutex.h"
+#include "Poco/Util/LoggingConfigurator.h"
+#include "Poco/Util/PropertyFileConfiguration.h"
 #include "UCTSearchRunner.h"
 #include "util/Counter.h"
+#include "Poco/Debugger.h"
 
 using Poco::Logger;
 using Poco::PatternFormatter;
@@ -18,6 +21,9 @@ using Poco::ConsoleChannel;
 using Poco::FileChannel;
 using Poco::Message;
 using Poco::Mutex;
+using Poco::Util::LoggingConfigurator;
+using Poco::Util::PropertyFileConfiguration;
+using Poco::Debugger;
 
 
 static Mutex coutLock;
@@ -57,6 +63,10 @@ void testThread() {
 }
 
 void testLog() {
+	PropertyFileConfiguration *props = new PropertyFileConfiguration("poco-logging.config");
+	LoggingConfigurator configrator;
+	configrator.configure(props);
+
 	FormattingChannel* pFCConsole = new FormattingChannel(new PatternFormatter("%s: %p: %t"));
 	pFCConsole->setChannel(new ConsoleChannel);
 	pFCConsole->open();
@@ -84,6 +94,8 @@ void testLog() {
 	poco_warning_f2(consoleLogger, "A warning message with arguments: %d, %d", 1, 2);
 
 	Logger::get("ConsoleLogger").error("Another error message");
+
+	Logger::get("logger1").error("Hello World! Error Just Occurred.");
 }
 
 typedef void (HelloRunnable::*HelloFuncPtrType)();
@@ -97,13 +109,24 @@ void testFuncPointer() {
 	(r->*f)();
 }
 
+void testAssertion() {
+	int i=1;
+	poco_assert(i >= 1);
+	poco_assert_dbg(i >= 0);
+	//poco_bugcheck();
+	Debugger::enter();
+	std::cout << Debugger::isAvailable() << std::endl;
+	poco_bugcheck_msg("invalid values");
+}
 
 
 int main(int argc, char** argv)
 {
-	testThread();
+	testAssertion();
 	system("pause");
 
+	// Util::config("super-go.config");
+	//
 	// SuperGoGame* game = new SuperGoGame("super-go.config");
 	// game->init();
 	// game->setPlayer(BLACK);

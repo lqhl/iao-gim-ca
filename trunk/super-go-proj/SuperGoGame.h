@@ -52,7 +52,7 @@ public:
 
 	GenMoveFunc genMove;
 
-	vector<UCTSearchRunner> workers;
+	vector<UCTSearchRunner*> workers;
 
 	RWLock* treeLock;
 
@@ -62,14 +62,17 @@ public:
 
 	Board board;
 
-	SuperGoGame(const string& fileName);
+	SuperGoGame();
 
 	void setPlayer(int player);
 
 	void init();
 
+	void rcvMove(MOVE move, COLOR color);
+
 	// given a move, generate a new move
-	MOVE genMoveUCT(MOVE move);
+
+	MOVE genMoveUCT();
 
 
 };
