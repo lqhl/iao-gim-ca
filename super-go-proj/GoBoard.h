@@ -157,30 +157,6 @@ public:
     /** Set the current player. */
     void SetToPlay(SgBlackWhite player);
 
-    /** See SgBoardConst::Line */
-    SgGrid Line(SgPoint p) const;
-
-    /** See SgBoardConst::Pos */
-    SgGrid Pos(SgPoint p) const;
-
-    /** Returns the offset to the point on the line above this point.
-        Returns zero for points outside the board, and for the center
-        point(s). */
-    int Up(SgPoint p) const;
-
-    /** Returns the offset along left side of the board.
-        Left and right are as seen from the edge toward the center of the
-        board.
-        Returns zero for the same points as Up does. */
-    int Left(SgPoint p) const;
-
-    /** Returns the offset along right side of the board.
-        @see Left for more info. */
-    int Right(SgPoint p) const;
-
-    /** Same as Left/Right, but the side is passed in as an index (0 or 1). */
-    int Side(SgPoint p, int index) const;
-
     bool IsSuicide(SgPoint p, SgBlackWhite toPlay) const;
 
     bool IsValidPoint(SgPoint p) const;
@@ -471,11 +447,11 @@ public:
         @see TakeSnapshot() */
     void RestoreSnapshot();
 
-private:
     SgPoint m_boardIter[SG_MAX_ONBOARD + 1];
 
     SgPoint* m_boardIterEnd;
 
+private:
     /** Data related to a block of stones on the board. */
     class Block
     {
@@ -504,7 +480,7 @@ private:
 
         void Init(SgBlackWhite c, SgPoint anchor)
         {
-            poco_assert_BW(c);
+            SG_ASSERT_BW(c);
             m_color = c;
             m_anchor = anchor;
             m_stones.SetTo(anchor);
@@ -514,7 +490,7 @@ private:
         void Init(SgBlackWhite c, SgPoint anchor, GoPointList stones,
                   LibertyList liberties)
         {
-            poco_assert_BW(c);
+            SG_ASSERT_BW(c);
             poco_assert(stones.Contains(anchor));
             m_color = c;
             m_anchor = anchor;
@@ -1180,7 +1156,7 @@ inline bool GoBoard::IsBorder(SgPoint p) const
 inline bool GoBoard::IsColor(SgPoint p, int c) const
 {
     poco_assert(p != SG_PASS);
-    poco_assert_EBW(c);
+    SG_ASSERT_EBW(c);
     return m_state.m_color[p] == c;
 }
 
@@ -1198,7 +1174,7 @@ inline bool GoBoard::IsFirst(SgPoint p) const
 
 inline bool GoBoard::IsLegal(int p, SgBlackWhite player) const
 {
-    poco_assert_BW(player);
+    SG_ASSERT_BW(player);
     if (IsPass(p))
         return true;
     poco_assert(SgPointUtil::InBoardRange(p));
@@ -1398,7 +1374,7 @@ inline void GoBoard::SetKoModifiesHash(bool modify)
 
 inline void GoBoard::SetToPlay(SgBlackWhite player)
 {
-    poco_assert_BW(player);
+    SG_ASSERT_BW(player);
     m_state.m_toPlay = player;
 }
 

@@ -27,17 +27,17 @@ inline bool SgIsBlackWhite(int c)
     return c == SG_BLACK || c == SG_WHITE;
 }
 
-#define poco_assert_BW(c) poco_assert(SgIsBlackWhite(c))
+#define SG_ASSERT_BW(c) poco_assert(SgIsBlackWhite(c))
 
 inline SgBlackWhite SgOppBW(SgBlackWhite c)
 {
-    poco_assert_BW(c);
+    SG_ASSERT_BW(c);
     return SG_BLACK + SG_WHITE - c;
 }
 
 inline char SgBW(SgBlackWhite color)
 {
-    poco_assert_BW(color);
+    SG_ASSERT_BW(color);
     return color == SG_BLACK ? 'B' : 'W';
 }
 
@@ -65,7 +65,7 @@ public:
     /** Advance the state of the iteration to the next element. */
     void operator++()
     {
-        poco_assert_BW(m_color);
+        SG_ASSERT_BW(m_color);
         ++m_color;
     }
 

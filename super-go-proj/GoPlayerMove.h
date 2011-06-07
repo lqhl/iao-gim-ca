@@ -47,7 +47,7 @@ inline GoPlayerMove::GoPlayerMove(SgBlackWhite color, SgPoint point)
     : m_color(color),
       m_point(point)
 {
-    poco_assert_BW(color);
+    SG_ASSERT_BW(color);
 }
 
 inline GoPlayerMove::~GoPlayerMove()

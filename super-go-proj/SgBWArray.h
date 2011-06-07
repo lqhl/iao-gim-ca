@@ -82,14 +82,14 @@ inline bool SgBWArray<T>::operator!=(const SgBWArray& bwArray) const
 template <class T>
 inline T& SgBWArray<T>::operator[](SgBlackWhite color)
 {
-    poco_assert_BW(color);
+    SG_ASSERT_BW(color);
     return m_array[color];
 }
 
 template <class T>
 inline const T& SgBWArray<T>::operator[](SgBlackWhite color) const
 {
-    poco_assert_BW(color);
+    SG_ASSERT_BW(color);
     return m_array[color];
 }
 
