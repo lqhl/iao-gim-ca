@@ -33,10 +33,10 @@ typedef int SgEmptyBlackWhite;
 /** SG_BLACK, SG_WHITE, SG_EMPTY, or SG_BORDER */
 typedef int SgBoardColor;
 
-#define poco_assert_EBW(c) \
+#define SG_ASSERT_EBW(c) \
     poco_assert(c == SG_BLACK || c == SG_WHITE || c == SG_EMPTY)
 
-#define poco_assert_COLOR(c) \
+#define SG_ASSERT_COLOR(c) \
 poco_assert(c == SG_BLACK || c == SG_WHITE || c == SG_EMPTY || c == SG_BORDER)
 
 inline bool SgIsEmptyBlackWhite(SgBoardColor c)
@@ -46,13 +46,13 @@ inline bool SgIsEmptyBlackWhite(SgBoardColor c)
 
 inline SgBoardColor SgOpp(SgBoardColor c)
 {
-    poco_assert_COLOR(c);
+    SG_ASSERT_COLOR(c);
     return c <= SG_WHITE ? SgOppBW(c) : c;
 }
 
 inline char SgEBW(SgEmptyBlackWhite color)
 {
-    poco_assert_EBW(color);
+    SG_ASSERT_EBW(color);
     return color == SG_EMPTY ? 'E' : color == SG_BLACK ? 'B' : 'W';
 }
 

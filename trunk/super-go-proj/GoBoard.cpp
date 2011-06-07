@@ -63,7 +63,7 @@ void GoBoard::CheckConsistency() const
         if (IsBorder(p))
             continue;
         int c = m_state.m_color[p];
-        poco_assert_EBW(c);
+        SG_ASSERT_EBW(c);
         int n = 0;
         for (SgNb4Iterator it(p); it; ++it)
             if (m_state.m_color[*it] == SG_EMPTY)
@@ -489,7 +489,7 @@ void GoBoard::Init(int size)
 
 void GoBoard::InitBlock(GoBoard::Block& block, SgBlackWhite c, SgPoint anchor)
 {
-    poco_assert_BW(c);
+    SG_ASSERT_BW(c);
     Block::LibertyList liberties;
     GoPointList stones;
     SgReserveMarker reserve(m_marker);
@@ -616,7 +616,7 @@ void GoBoard::NeighborBlocks(SgPoint p, SgBlackWhite c, int maxLib,
 void GoBoard::AddStone(SgPoint p, SgBlackWhite c)
 {
     poco_assert(IsEmpty(p));
-    poco_assert_BW(c);
+    SG_ASSERT_BW(c);
     m_state.m_color[p] = c;
     m_state.m_empty.Exclude(p);
     m_state.m_all[c].Include(p);
@@ -634,7 +634,7 @@ void GoBoard::AddStone(SgPoint p, SgBlackWhite c)
 void GoBoard::RemoveStone(SgPoint p)
 {
     SgBlackWhite c = GetStone(p);
-    poco_assert_BW(c);
+    SG_ASSERT_BW(c);
     m_state.m_color[p] = SG_EMPTY;
     m_state.m_empty.Include(p);
     m_state.m_all[c].Exclude(p);
@@ -685,7 +685,7 @@ bool GoBoard::CheckSuicide(SgPoint p, StackEntry& entry)
 void GoBoard::Play(SgPoint p, SgBlackWhite player)
 {
     poco_assert(p != SG_NULLMOVE);
-    poco_assert_BW(player);
+    SG_ASSERT_BW(player);
     poco_assert(IsPass(p) || (IsValidPoint(p) && IsEmpty(p)));
     CheckConsistency();
     ++m_countPlay;
@@ -837,10 +837,13 @@ void GoBoard::RestoreSnapshot()
 void GoBoard::printAll(ostream& out) {
 	for (int i = 1; i <= m_size; i++) {
 		for (int j = 1; j <= m_size; j++) {
+			char ch;
 			if (IsEmpty(SgPointUtil::Pt(i, j)))
-				out << '.';
+				ch = '.';
 			else
-				out << SgBW(GetColor(SgPointUtil::Pt(i, j)));
+				ch = SgBW(GetColor(SgPointUtil::Pt(i, j)));
+			cout << ch;
+			out << ch;
 		}
 		out << endl;
 	}
