@@ -32,12 +32,12 @@ void SuperGoGame::setPlayer(int player) {
 }
 
 void SuperGoGame::rcvMove(MOVE move, COLOR color) {
-	if (move == NULL_MOVE) {
-		assert(board.getLevel() == 0 && player == BLACK);
-	}
-	else {
-		board.execute(move);
-	}
+//	if (move == NULL_MOVE) {
+//		assert(board.getLevel() == 0 && player == BLACK);
+//	}
+//	else {
+//		board.execute(move);
+//	}
 
 }
 

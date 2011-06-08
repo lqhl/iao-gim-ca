@@ -9,11 +9,13 @@
 #include "Poco/FileChannel.h"
 #include "Poco/Message.h"
 #include "Poco/Util/Timer.h"
+#include "Poco/Random.h"
 #include <string>
 
 using std::string;
 using Poco::Util::PropertyFileConfiguration;
 using Poco::Logger;
+using Poco::Random;
 
 
 // this class contains the loggers and the configuration files
@@ -34,5 +36,6 @@ public:
 	static void init(const string& fileName);
 
 	static void close();
+
 };
 #endif
