@@ -3,7 +3,7 @@
 
 #include "SuperGo.h"
 #include "UCTSearchRunner.h"
-#include "Board.h"
+#include "GoBoard.h"
 #include "UCTTree.h"
 #include "Poco/RWLock.h"
 #include <vector>
@@ -60,7 +60,7 @@ public:
 
 	int player, opponent;
 
-	Board board;
+	GoBoard board;
 
 	SuperGoGame();
 
