@@ -5,8 +5,8 @@
 #include "Poco/Thread.h"
 #include "Poco/Runnable.h"
 #include "Poco/RWLock.h"
-#include "PlayOutBoard.h"
-#include "Board.h"
+#include "GoBoard.h"
+#include "GoUctBoard.h"
 #include "UCTTree.h"
 
 using Poco::RWLock;
@@ -28,7 +28,7 @@ public:
 
 	Thread thread;
 
-	PlayOutBoard playOutBoard;
+	GoUctBoard playOutBoard;
 
 	SearchGenMove selectChildren;
 
@@ -47,7 +47,7 @@ public:
 	// returns the result of playOut
 	// from the state of the board, start MC-simulation
 	// saves the simulation sequence in seq
-	int playOut(Board* board, vector<int>& seq);
+	int playOut(GoBoard* board, vector<int>& seq);
 
 	// seqIn: sequence in the tree, seqOut: seqOut of the tree
 	// update the tree according the simulation result

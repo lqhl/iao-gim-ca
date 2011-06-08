@@ -2,7 +2,7 @@
 #define UCT_TREE_H
 
 #include "UCTNode.h"
-#include "Board.h"
+#include "GoBoard.h"
 #include <vector>
 
 using std::vector;
@@ -37,6 +37,6 @@ public:
 
 	// after play in tree, if win-loss is not proven, we need to expand a node
 	// initialize the statistics based on patterns
-	void expandNode(int n, Board* board);
+	void expandNode(int n, GoBoard* board);
 };
 #endif
