@@ -11,11 +11,12 @@
 #include "UCTTree.h"
 #include "GoPlayerMove.h"
 #include "Poco/Random.h"
+#include "Poco/Logger.h"
 
 using Poco::RWLock;
 using Poco::Thread;
 using Poco::Random;
-
+using Poco::Logger;
 class SuperGoGame;
 
 class UCTSearchRunner;
@@ -39,6 +40,16 @@ public:
 
 	double ravePara1, ravePara2, CUCT;
 
+	Logger& uctLogger;
+
+	// just for debugging usage
+	UCTSearchRunner(GoBoard& board) : playOutBoard(board), uctLogger(Logger::get("UctLogger")) {
+		cerr << "Debugging UCTSearchRunner\n";
+
+		rand.seed(0);
+	}
+
+
 	UCTSearchRunner(SuperGoGame* game);
 
 	void searchBoard(int timeLimit, int numPlayOut, GoBoard* board,
@@ -47,19 +58,29 @@ public:
 	// search in tree, from the root to a terminal node
 	// save the result in seq
 	void searchInTree(UCTTree* tree, RWLock* treeLock, GoBoard* board, vector<
-			GoPlayerMove>& seq);
+			SgPoint>& seq);
 
 	// returns the result of playOut
 	// from the state of the board, start MC-simulation
 	// saves the simulation sequence in seq
-	int playOut(GoBoard* board, vector<GoPlayerMove>& seq);
+	COUNT playOut(GoBoard* board, vector<SgPoint>& seq);
+
+	inline GoPlayerMove generateMove() {
+		return generateMove(&playOutBoard, playOutBoard.ToPlay());
+	}
+
+	void play(GoPlayerMove move) {
+		poco_assert(move.Color() == playOutBoard.ToPlay());
+
+		playOutBoard.Play(move.Point());
+	}
 
 	GoPlayerMove generateMove(GoUctBoard* board, SgBlackWhite toPlay);
 
 	// seqIn: sequence in the tree, seqOut: seqOut of the tree
 	// update the tree according the simulation result
-	void upateStat(UCTTree* tree, RWLock* treeLock, int result, vector<
-			GoPlayerMove>& seqIn, vector<GoPlayerMove>& seqOut);
+	void upateStat(UCTTree* tree, RWLock* treeLock, COUNT result, vector<
+			SgPoint>& seqIn, vector<SgPoint>& seqOut);
 
 	/* the following four functions select children in tree based on different heuristics*/
 	int selectChildrenUCT(UCTTree* tree, int n);
@@ -86,9 +107,9 @@ public:
 
 	bool generatePatternMove(GoUctBoard* board, vector<SgPoint>& moves);
 
-	void generateCaptureMoves(GoBoard* board, vector<GoPlayerMove>& moves);
+	void generateCaptureMoves(GoUctBoard* board, vector<SgPoint>& moves);
 
-	SgPoint generateRandomMoves(GoUctBoard* board);
+	SgPoint generateRandomMove(GoUctBoard* board);
 
 	void selectLibertyMove(GoUctBoard* board, vector<SgPoint>& moves, SgPoint block);
 
@@ -106,9 +127,22 @@ public:
 	/* candidates for random moves*/
 	vector<SgPoint> random_candidates;
 
-	void captureCandidatesUpdateOnPlay(GoBoard* board);
+	void captureCandidatesUpdateOnPlay(GoUctBoard* board);
 
-	void randomMoveUpdateOnPlay(GoBoard* board);
+	void randomMoveUpdateOnPlay(GoUctBoard* board);
+
+	void startPlayOut(GoBoard* board);
+
+	void PushBack(vector<SgPoint>& moves, SgPoint p) {
+		if (playOutBoard.IsLegal(p))
+			moves.push_back(p);
+	}
+
+	void genNakade(SgPoint p, GoUctBoard* board, vector<SgPoint>& moves);
+
+	void GeneratePatternMove(GoUctBoard* board, vector<SgPoint>& moves, SgPoint p);
+
+	void GeneratePatternMove2(GoUctBoard* board, vector<SgPoint>& moves, SgPoint p);
 
 };
 

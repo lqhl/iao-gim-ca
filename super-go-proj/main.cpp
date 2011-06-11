@@ -3,11 +3,15 @@
 #include "SgPoint.h"
 #include "SgBlackWhite.h"
 #include "GoUctBoard.h"
+#include "UCTPatterns.h"
+#include "TestMCSimulation.h"
+#include "util/util.h"
+#include "testHashTable.h"
 
 using namespace std;
 
 void testGoBoard() {
-	ofstream out("sb.txt");
+	ofstream out("test-go-board.txt");
 	GoBoard board(13);
 	using namespace SgPointUtil;
 	board.Play(Pt(1, 1), SG_BLACK);
@@ -19,7 +23,7 @@ void testGoBoard() {
 }
 
 void testGoUctBoard() {
-	ofstream out("sb.txt");
+	ofstream out("test-go-uct-board.txt");
 	GoBoard board(13);
 	using namespace SgPointUtil;
 	board.Play(Pt(1, 1), SG_BLACK);
@@ -34,6 +38,18 @@ void testGoUctBoard() {
 }
 
 int main() {
-	testGoUctBoard();
+	// !!! IMPORTANT
+	//Util::init("super-go.config");
+	//UctPatterns::init();
+
+	//testHashTable();
+	testVector();
+
+//	Logger::get("SimulationLogger").error("Hello World! Error Just Occurred.");
+	
+	//testGoUctBoard();
+	//testMCSimulation2();
+
+	//UctPatterns::test();
 	return 0;
 }

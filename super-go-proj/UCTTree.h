@@ -38,5 +38,7 @@ public:
 	// after play in tree, if win-loss is not proven, we need to expand a node
 	// initialize the statistics based on patterns
 	void expandNode(int n, GoBoard* board);
+
+	void updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT result);
 };
 #endif

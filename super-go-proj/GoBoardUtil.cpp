@@ -3,23 +3,16 @@
     See GoBoardUtil.h */
 //----------------------------------------------------------------------------
 
-#include "SgSystem.h"
 #include "GoBoardUtil.h"
 
 #include <iomanip>
 #include <sstream>
 #include <string>
 #include "GoBoard.h"
-#include "GoModBoard.h"
-#include "GoMoveExecutor.h"
-#include "GoSafetySolver.h"
 #include "SgDebug.h"
-#include "SgException.h"
 #include "SgNbIterator.h"
-#include "SgProp.h"
 
 using namespace std;
-using SgPropUtil::PointToSgfString;
 
 //----------------------------------------------------------------------------
 
@@ -108,13 +101,13 @@ void GoBoardUtil::AddWall(GoBoard& bd,
 
 GoPointList GoBoardUtil::AdjacentStones(const GoBoard& bd, SgPoint point)
 {
-    SG_ASSERT(bd.IsValidPoint(point));
-    SG_ASSERT(bd.Occupied(point));
+    poco_assert(bd.IsValidPoint(point));
+    poco_assert(bd.Occupied(point));
     const SgBlackWhite other = SgOppBW(bd.GetStone(point));
     GoPointList result;
     SgMarker& mark = bd.m_userMarker;
     SgReserveMarker reserve(mark);
-    SG_UNUSED(reserve);
+//    SG_UNUSED(reserve);
     mark.Clear();
     for (GoBoard::StoneIterator it(bd, point); it; ++it)
     {
@@ -137,7 +130,7 @@ GoPointList GoBoardUtil::AdjacentStones(const GoBoard& bd, SgPoint point)
 void GoBoardUtil::AdjacentBlocks(const GoBoard& bd, SgPoint p, int maxLib,
                                  SgVector<SgPoint>* blocks)
 {
-    SG_ASSERT(blocks);
+    poco_assert(blocks);
     SgPoint a[SG_MAXPOINT];
     int n = bd.AdjacentBlocks(p, maxLib, a, SG_MAXPOINT);
     blocks->SetTo(a, n);
@@ -151,7 +144,7 @@ void GoBoardUtil::BlocksAdjacentToPoints(const GoBoard& bd,
     // Mark all points to avoid n^2 algorithm.
     SgMarker& mark = bd.m_userMarker;
     SgReserveMarker reserve(mark);
-    SG_UNUSED(reserve);
+//    SG_UNUSED(reserve);
     mark.Clear();
     for (SgVectorIterator<SgPoint> it1(points); it1; ++it1)
         mark.Include(*it1);
@@ -186,11 +179,11 @@ void GoBoardUtil::BlocksAdjacentToPoints(const GoBoard& bd,
                                          SgVector<SgPoint>* blocks)
 {
     // exact copy from list version above
-    SG_ASSERT(blocks);
+    poco_assert(blocks);
     // Mark all points to avoid n^2 algorithm.
     SgMarker& mark = bd.m_userMarker;
     SgReserveMarker reserve(mark);
-    SG_UNUSED(reserve);
+//    SG_UNUSED(reserve);
     mark.Clear();
     for (SgSetIterator it1(points); it1; ++it1)
         mark.Include(*it1);
@@ -276,53 +269,53 @@ SgPointArray<int> GoBoardUtil::CfgDistance(const GoBoard& bd, SgPoint p,
     return array;
 }
 
-void GoBoardUtil::DumpBoard(const GoBoard& bd, std::ostream& out)
-{
-    const int size = bd.Size();
-    out << bd;
-    if (bd.MoveNumber() == 0)
-        return;
-    out << "(;SZ[" << size << "]\n";
-    const GoSetup& setup = bd.Setup();
-    if (! setup.IsEmpty())
-    {
-        for (SgBWIterator it; it; ++it)
-        {
-            SgBlackWhite c = *it;
-            int stoneNumber = 0;
-            out << (c == SG_BLACK ? "AB" : "AW");
-            for (SgSetIterator it2(setup.m_stones[c]); it2; ++it2)
-            {
-                SgPoint p = *it2;
-                ++stoneNumber;
-                out << '[' << PointToSgfString(p, size, SG_PROPPOINTFMT_GO)
-                    << ']';
-                if (stoneNumber % 10 == 0)
-                    out << '\n';
-            }
-            out << '\n';
-        }
-        out << "PL[" << (setup.m_player == SG_BLACK ? 'B' : 'W') << "]\n";
-    }
-    int moveNumber = 0;
-    for (int i = 0; i < bd.MoveNumber(); ++i)
-    {
-        GoPlayerMove move = bd.Move(i);
-        out << ';';
-        out << (move.Color() == SG_BLACK ? "B" : "W");
-        ++moveNumber;
-        out << '[' << PointToSgfString(move.Point(), size, SG_PROPPOINTFMT_GO)
-            << ']';
-        if (moveNumber % 10 == 0)
-            out << '\n';
-    }
-    out << ")\n";
-}
+//void GoBoardUtil::DumpBoard(const GoBoard& bd, std::ostream& out)
+//{
+//    const int size = bd.Size();
+//    out << bd;
+//    if (bd.MoveNumber() == 0)
+//        return;
+//    out << "(;SZ[" << size << "]\n";
+//    const GoSetup& setup = bd.Setup();
+//    if (! setup.IsEmpty())
+//    {
+//        for (SgBWIterator it; it; ++it)
+//        {
+//            SgBlackWhite c = *it;
+//            int stoneNumber = 0;
+//            out << (c == SG_BLACK ? "AB" : "AW");
+//            for (SgSetIterator it2(setup.m_stones[c]); it2; ++it2)
+//            {
+//                SgPoint p = *it2;
+//                ++stoneNumber;
+//                out << '[' << PointToSgfString(p, size, SG_PROPPOINTFMT_GO)
+//                    << ']';
+//                if (stoneNumber % 10 == 0)
+//                    out << '\n';
+//            }
+//            out << '\n';
+//        }
+//        out << "PL[" << (setup.m_player == SG_BLACK ? 'B' : 'W') << "]\n";
+//    }
+//    int moveNumber = 0;
+//    for (int i = 0; i < bd.MoveNumber(); ++i)
+//    {
+//        GoPlayerMove move = bd.Move(i);
+//        out << ';';
+//        out << (move.Color() == SG_BLACK ? "B" : "W");
+//        ++moveNumber;
+//        out << '[' << PointToSgfString(move.Point(), size, SG_PROPPOINTFMT_GO)
+//            << ']';
+//        if (moveNumber % 10 == 0)
+//            out << '\n';
+//    }
+//    out << ")\n";
+//}
 
 void GoBoardUtil::ExpandToBlocks(const GoBoard& board, SgPointSet& pointSet)
 {
     // @todo faster to use GoBoard::StoneIterator in GoBoard?
-    SG_ASSERT(pointSet.SubsetOf(board.Occupied()));
+    poco_assert(pointSet.SubsetOf(board.Occupied()));
     int size = board.Size();
     for (SgBlackWhite color = SG_BLACK; color <= SG_WHITE; ++color)
     {
@@ -356,26 +349,26 @@ void GoBoardUtil::DiagonalsOfColor(const GoBoard& bd, SgPoint p, int c,
         diagonals->PushBack(p + SG_NS + SG_WE);
 }
 
-bool GoBoardUtil::EndOfGame(const GoBoard& bd)
-{
-    SgBlackWhite toPlay = bd.ToPlay();
-    GoPlayerMove passToPlay(toPlay, SG_PASS);
-    GoPlayerMove passOpp(SgOppBW(toPlay), SG_PASS);
-    int moveNumber = bd.MoveNumber();
-    if (bd.Rules().TwoPassesEndGame())
-    {
-        return moveNumber >= 2
-            && bd.Move(moveNumber - 1) == passOpp
-            && bd.Move(moveNumber - 2) == passToPlay;
-    }
-    else // Three passes in a row end the game.
-    {
-        return moveNumber >= 3
-            && bd.Move(moveNumber - 1) == passOpp
-            && bd.Move(moveNumber - 2) == passToPlay
-            && bd.Move(moveNumber - 3) == passOpp;
-    }
-}
+//bool GoBoardUtil::EndOfGame(const GoBoard& bd)
+//{
+//    SgBlackWhite toPlay = bd.ToPlay();
+//    GoPlayerMove passToPlay(toPlay, SG_PASS);
+//    GoPlayerMove passOpp(SgOppBW(toPlay), SG_PASS);
+//    int moveNumber = bd.MoveNumber();
+//    if (bd.Rules().TwoPassesEndGame())
+//    {
+//        return moveNumber >= 2
+//            && bd.Move(moveNumber - 1) == passOpp
+//            && bd.Move(moveNumber - 2) == passToPlay;
+//    }
+//    else // Three passes in a row end the game.
+//    {
+//        return moveNumber >= 3
+//            && bd.Move(moveNumber - 1) == passOpp
+//            && bd.Move(moveNumber - 2) == passToPlay
+//            && bd.Move(moveNumber - 3) == passOpp;
+//    }
+//}
 
 
 bool GoBoardUtil::GenerateIfLegal(const GoBoard& bd, SgPoint move,
@@ -392,8 +385,8 @@ bool GoBoardUtil::GenerateIfLegal(const GoBoard& bd, SgPoint move,
 
 void GoBoardUtil::GetCoordString(SgMove p, std::string* s, int boardSize)
 {
-    SG_ASSERT(s);
-    SG_ASSERT(p != SG_NULLMOVE);
+    poco_assert(s);
+    poco_assert(p != SG_NULLMOVE);
     if (p == SG_PASS)
         *s = "Pass";
     else if (p == SG_COUPONMOVE)
@@ -413,7 +406,7 @@ void GoBoardUtil::GetCoordString(SgMove p, std::string* s, int boardSize)
 bool GoBoardUtil::HasAdjacentBlocks(const GoBoard& bd, SgPoint p,
                                     int maxLib)
 {
-    SG_ASSERT(bd.Occupied(p));
+    poco_assert(bd.Occupied(p));
     const SgBlackWhite other = SgOppBW(bd.GetStone(p));
     for (GoBoard::StoneIterator stone(bd, p); stone; ++stone)
         for (SgNb4Iterator nb(*stone); nb; ++nb)
@@ -449,60 +442,60 @@ bool GoBoardUtil::IsHandicapPoint(SgGrid size, SgGrid col, SgGrid row)
             && (col == line1 || col == line3);
 }
 
-bool GoBoardUtil::IsSimpleEyeOfBlock(const GoBoard& bd, SgPoint lib,
-                                     SgPoint blockAnchor,
-                                     const SgVector<SgPoint>& eyes)
-{
-    SgBlackWhite color = bd.GetStone(blockAnchor);
-    // need IsColor test for nbs because might be off board.
-    if (bd.IsColor(lib - SG_NS, color)
-        && bd.Anchor(lib - SG_NS) != blockAnchor)
-        return false;
-    if (bd.IsColor(lib + SG_NS, color)
-        && bd.Anchor(lib + SG_NS) != blockAnchor)
-        return false;
-    if (bd.IsColor(lib - SG_WE, color)
-        && bd.Anchor(lib - SG_WE) != blockAnchor)
-        return false;
-    if (bd.IsColor(lib + SG_WE, color)
-        && bd.Anchor(lib + SG_WE) != blockAnchor)
-        return false;
-    int nuForFalse = (bd.Line(lib) == 1) ? 1 : 2;
-    // no need to check diagonals for same block since direct neighbors are.
-    for (SgNb4DiagIterator it(lib); it; ++it)
-    {
-        SgPoint nb(*it);
-        if (! bd.IsBorder(nb) && ! bd.IsColor(nb, color)
-            && ! eyes.Contains(nb))
-            if (--nuForFalse <= 0)
-                return false;
-    }
-    return true;
-}
+//bool GoBoardUtil::IsSimpleEyeOfBlock(const GoBoard& bd, SgPoint lib,
+//                                     SgPoint blockAnchor,
+//                                     const SgVector<SgPoint>& eyes)
+//{
+//    SgBlackWhite color = bd.GetStone(blockAnchor);
+//    // need IsColor test for nbs because might be off board.
+//    if (bd.IsColor(lib - SG_NS, color)
+//        && bd.Anchor(lib - SG_NS) != blockAnchor)
+//        return false;
+//    if (bd.IsColor(lib + SG_NS, color)
+//        && bd.Anchor(lib + SG_NS) != blockAnchor)
+//        return false;
+//    if (bd.IsColor(lib - SG_WE, color)
+//        && bd.Anchor(lib - SG_WE) != blockAnchor)
+//        return false;
+//    if (bd.IsColor(lib + SG_WE, color)
+//        && bd.Anchor(lib + SG_WE) != blockAnchor)
+//        return false;
+//    int nuForFalse = (bd.Line(lib) == 1) ? 1 : 2;
+//    // no need to check diagonals for same block since direct neighbors are.
+//    for (SgNb4DiagIterator it(lib); it; ++it)
+//    {
+//        SgPoint nb(*it);
+//        if (! bd.IsBorder(nb) && ! bd.IsColor(nb, color)
+//            && ! eyes.Contains(nb))
+//            if (--nuForFalse <= 0)
+//                return false;
+//    }
+//    return true;
+//}
 
-bool GoBoardUtil::IsSnapback(const GoBoard& constBd, SgPoint p)
-{
-    SG_ASSERT(constBd.IsValidPoint(p));
-    SG_ASSERT(constBd.Occupied(p));
-
-    bool snapback = false;
-    if (constBd.IsSingleStone(p) && constBd.InAtari(p))
-    {
-        const SgPoint lib = constBd.TheLiberty(p);
-        GoModBoard mbd(constBd);
-        GoBoard& bd = mbd.Board();
-        const bool isLegal =
-            GoBoardUtil::PlayIfLegal(bd, lib, SgOppBW(bd.GetStone(p)));
-        if (  isLegal
-           && bd.InAtari(lib)
-           && ! bd.IsSingleStone(lib)
-           )
-            snapback = true;
-        if (isLegal)
-            bd.Undo();
-    }
-    return snapback;
-}
+//bool GoBoardUtil::IsSnapback(const GoBoard& constBd, SgPoint p)
+//{
+//    poco_assert(constBd.IsValidPoint(p));
+//    poco_assert(constBd.Occupied(p));
+//
+//    bool snapback = false;
+//    if (constBd.IsSingleStone(p) && constBd.InAtari(p))
+//    {
+//        const SgPoint lib = constBd.TheLiberty(p);
+//        GoModBoard mbd(constBd);
+//        GoBoard& bd = mbd.Board();
+//        const bool isLegal =
+//            GoBoardUtil::PlayIfLegal(bd, lib, SgOppBW(bd.GetStone(p)));
+//        if (  isLegal
+//           && bd.InAtari(lib)
+//           && ! bd.IsSingleStone(lib)
+//           )
+//            snapback = true;
+//        if (isLegal)
+//            bd.Undo();
+//    }
+//    return snapback;
+//}
 
 bool GoBoardUtil::ManySecondaryLibs(const GoBoard& bd, SgPoint block)
 {
@@ -559,45 +552,45 @@ void GoBoardUtil::NeighborsOfColor(const GoBoard& bd, SgPoint p, int c,
         neighbors->PushBack(p + SG_NS);
 }
 
-bool GoBoardUtil::TrompTaylorPassWins(const GoBoard& bd, SgBlackWhite toPlay)
-{
-    if (toPlay != bd.ToPlay())
-        // Not defined if non-alternating moves
-        return false;
-    if (! bd.Rules().CaptureDead() || bd.Rules().JapaneseScoring())
-        return false;
-    if (bd.GetLastMove() != SG_PASS)
-        return false;
-    float komi = bd.Rules().Komi().ToFloat();
-    float score = GoBoardUtil::TrompTaylorScore(bd, komi);
-    if ((score > 0 && toPlay == SG_BLACK)
-        || (score < 0 && toPlay == SG_WHITE))
-        return true;
-    return false;
-}
+//bool GoBoardUtil::TrompTaylorPassWins(const GoBoard& bd, SgBlackWhite toPlay)
+//{
+//    if (toPlay != bd.ToPlay())
+//        // Not defined if non-alternating moves
+//        return false;
+//    if (! bd.Rules().CaptureDead() || bd.Rules().JapaneseScoring())
+//        return false;
+//    if (bd.GetLastMove() != SG_PASS)
+//        return false;
+//    float komi = bd.Rules().Komi().ToFloat();
+//    float score = GoBoardUtil::TrompTaylorScore(bd, komi);
+//    if ((score > 0 && toPlay == SG_BLACK)
+//        || (score < 0 && toPlay == SG_WHITE))
+//        return true;
+//    return false;
+//}
 
-bool GoBoardUtil::PlayIfLegal(GoBoard& bd, SgPoint p, SgBlackWhite player)
-{
-    if (p != SG_PASS && p != SG_COUPONMOVE)
-    {
-        if (! bd.IsEmpty(p))
-            return false;
-        if (! bd.Rules().AllowSuicide() && bd.IsSuicide(p, player))
-            return false;
-    }
-    bd.Play(p, player);
-    if (bd.LastMoveInfo(GO_MOVEFLAG_ILLEGAL))
-    {
-        bd.Undo();
-        return false;
-    }
-    return true;
-}
+//bool GoBoardUtil::PlayIfLegal(GoBoard& bd, SgPoint p, SgBlackWhite player)
+//{
+//    if (p != SG_PASS && p != SG_COUPONMOVE)
+//    {
+//        if (! bd.IsEmpty(p))
+//            return false;
+//        if (! bd.Rules().AllowSuicide() && bd.IsSuicide(p, player))
+//            return false;
+//    }
+//    bd.Play(p, player);
+//    if (bd.LastMoveInfo(GO_MOVEFLAG_ILLEGAL))
+//    {
+//        bd.Undo();
+//        return false;
+//    }
+//    return true;
+//}
 
 void GoBoardUtil::ReduceToAnchors(const GoBoard& bd,
                                   SgVector<SgPoint>* stones)
 {
-    SG_ASSERT(stones);
+    poco_assert(stones);
     SgVector<SgPoint> result;
     for (SgVectorIterator<SgPoint> stone(*stones); stone; ++stone)
         if (bd.Occupied(*stone))
@@ -615,28 +608,28 @@ void GoBoardUtil::ReduceToAnchors(const GoBoard& bd,
             anchors.Include(bd.Anchor(*it));
 }
 
-void GoBoardUtil::RegionCode(const GoBoard& bd,
-                             const SgVector<SgPoint>& region,
-                             SgHashCode* c)
-{
-    BOOST_STATIC_ASSERT(SG_BLACK < 2);
-    BOOST_STATIC_ASSERT(SG_WHITE < 2);
-
-    c->Clear();
-    for (SgVectorIterator<SgPoint> it(region); it; ++it)
-    {
-        SgPoint p = *it;
-        if (bd.Occupied(p))
-            SgHashUtil::XorZobrist(*c, p + bd.GetStone(p) * SG_MAXPOINT);
-    }
-}
-
-bool GoBoardUtil::RemainingChineseHandicap(const GoBoard& bd)
-{
-    const GoRules& rules = bd.Rules();
-    return (! rules.JapaneseHandicap()
-            && rules.Handicap() > bd.TotalNumStones(SG_BLACK));
-}
+//void GoBoardUtil::RegionCode(const GoBoard& bd,
+//                             const SgVector<SgPoint>& region,
+//                             SgHashCode* c)
+//{
+//    BOOST_STATIC_ASSERT(SG_BLACK < 2);
+//    BOOST_STATIC_ASSERT(SG_WHITE < 2);
+//
+//    c->Clear();
+//    for (SgVectorIterator<SgPoint> it(region); it; ++it)
+//    {
+//        SgPoint p = *it;
+//        if (bd.Occupied(p))
+//            SgHashUtil::XorZobrist(*c, p + bd.GetStone(p) * SG_MAXPOINT);
+//    }
+//}
+//
+//bool GoBoardUtil::RemainingChineseHandicap(const GoBoard& bd)
+//{
+//    const GoRules& rules = bd.Rules();
+//    return (! rules.JapaneseHandicap()
+//            && rules.Handicap() > bd.TotalNumStones(SG_BLACK));
+//}
 
 float GoBoardUtil::ScoreSimpleEndPosition(const GoBoard& bd, float komi,
                                           bool noCheck)
@@ -652,9 +645,9 @@ void GoBoardUtil::SharedLiberties(const GoBoard& bd,
                                   SgPoint block2,
                                   SgVector<SgPoint>* sharedLibs)
 {
-    SG_ASSERT(sharedLibs);
-    SG_ASSERT(bd.Occupied(block1));
-    SG_ASSERT(bd.Occupied(block2));
+    poco_assert(sharedLibs);
+    poco_assert(bd.Occupied(block1));
+    poco_assert(bd.Occupied(block2));
     block1 = bd.Anchor(block1);
     block2 = bd.Anchor(block2);
     sharedLibs->Clear();
@@ -669,11 +662,11 @@ void GoBoardUtil::SharedLiberties(const GoBoard& bd,
 void GoBoardUtil::SharedLibertyBlocks(const GoBoard& bd, SgPoint anchor,
                                       int maxLib, SgVector<SgPoint>* blocks)
 {
-    SG_ASSERT(blocks);
+    poco_assert(blocks);
     // Mark all points and previous blocks.
     SgMarker& mark = bd.m_userMarker;
     SgReserveMarker reserve(mark);
-    SG_UNUSED(reserve);
+//    SG_UNUSED(reserve);
     mark.Clear();
     for (GoBoard::StoneIterator it1(bd, anchor); it1; ++it1)
         mark.Include(*it1);
@@ -715,8 +708,8 @@ void GoBoardUtil::UndoAll(GoBoard& bd)
 bool GoBoardUtil::AtLeastTwoSharedLibs(const GoBoard& bd, SgPoint block1,
                                        SgPoint block2)
 {
-    SG_ASSERT(bd.Occupied(block1));
-    SG_ASSERT(bd.Occupied(block2));
+    poco_assert(bd.Occupied(block1));
+    poco_assert(bd.Occupied(block2));
     //block1 = bd.Anchor(block1);
     block2 = bd.Anchor(block2);
     bool fHasOneShared = false;
@@ -732,19 +725,19 @@ bool GoBoardUtil::AtLeastTwoSharedLibs(const GoBoard& bd, SgPoint block1,
     return false;
 }
 
-void GoBoardUtil::TestForChain(GoBoard& bd, SgPoint block, SgPoint block2,
-                               SgPoint lib, SgVector<SgPoint>* extended)
-{
-    if (AtLeastTwoSharedLibs(bd, block, block2))
-        extended->PushBack(block);
-    else // protected lib.
-    {
-        GoRestoreToPlay r(bd);
-        bd.SetToPlay(SgOppBW(bd.GetStone(block)));
-        if (MoveNotLegalOrAtari(bd, lib))
-            extended->PushBack(block);
-    }
-}
+//void GoBoardUtil::TestForChain(GoBoard& bd, SgPoint block, SgPoint block2,
+//                               SgPoint lib, SgVector<SgPoint>* extended)
+//{
+//    if (AtLeastTwoSharedLibs(bd, block, block2))
+//        extended->PushBack(block);
+//    else // protected lib.
+//    {
+//        GoRestoreToPlay r(bd);
+//        bd.SetToPlay(SgOppBW(bd.GetStone(block)));
+//        if (MoveNotLegalOrAtari(bd, lib))
+//            extended->PushBack(block);
+//    }
+//}
 
 bool GoBoardUtil::HasStonesOfBothColors(const GoBoard& bd,
                                         const SgVector<SgPoint>& stones)
@@ -763,72 +756,72 @@ bool GoBoardUtil::HasStonesOfBothColors(const GoBoard& bd,
     return false;
 }
 
-bool GoBoardUtil::MoveNotLegalOrAtari(const GoBoard& bd, SgPoint move)
-{
-    GoModBoard modBoard(bd);
-    GoMoveExecutor execute(modBoard.Board(), move);
-    return (! execute.IsLegal() || bd.InAtari(move));
-}
+//bool GoBoardUtil::MoveNotLegalOrAtari(const GoBoard& bd, SgPoint move)
+//{
+//    GoModBoard modBoard(bd);
+//    GoMoveExecutor execute(modBoard.Board(), move);
+//    return (! execute.IsLegal() || bd.InAtari(move));
+//}
 
-bool GoBoardUtil::MoveLegalAndNotAtari(const GoBoard& bd, SgPoint move)
-{
-    GoModBoard modBoard(bd);
-    GoMoveExecutor execute(modBoard.Board(), move);
-    return (execute.IsLegal() && ! bd.InAtari(move));
-}
+//bool GoBoardUtil::MoveLegalAndNotAtari(const GoBoard& bd, SgPoint move)
+//{
+//    GoModBoard modBoard(bd);
+//    GoMoveExecutor execute(modBoard.Board(), move);
+//    return (execute.IsLegal() && ! bd.InAtari(move));
+//}
 
-bool GoBoardUtil::ScorePosition(const GoBoard& bd,
-                                const SgPointSet& deadStones, float& score)
-{
-    SgMarker marker;
-    int stones = 0;
-    int territory = 0;
-    int dead = 0;
-    for (GoBoard::Iterator it(bd); it; ++it)
-    {
-        SgPoint p = *it;
-        if (bd.Occupied(p) && ! deadStones.Contains(p))
-        {
-            if (bd.GetColor(p) == SG_BLACK)
-                ++stones;
-            else
-                --stones;
-            continue;
-        }
-        if (marker.Contains(p))
-            continue;
-        int nuPoints = 0;
-        int nuDeadWhite = 0;
-        int nuDeadBlack = 0;
-        bool isBlackAdjacent = false;
-        bool isWhiteAdjacent = false;
-        ScorePositionRecurse(bd, p, deadStones, marker, isBlackAdjacent,
-                             isWhiteAdjacent, nuPoints, nuDeadWhite,
-                             nuDeadBlack);
-        if ((nuDeadWhite > 0 && nuDeadBlack > 0)
-            || (isBlackAdjacent && nuDeadBlack > 0)
-            || (isWhiteAdjacent && nuDeadWhite > 0))
-            return false;
-        dead += nuDeadBlack;
-        dead -= nuDeadWhite;
-        if (isBlackAdjacent && ! isWhiteAdjacent)
-            territory += nuPoints;
-        else if (isWhiteAdjacent && ! isBlackAdjacent)
-            territory -= nuPoints;
-    }
-    int prisoners = bd.NumPrisoners(SG_BLACK) - bd.NumPrisoners(SG_WHITE);
-    float komi = bd.Rules().Komi().ToFloat();
-    if (bd.Rules().JapaneseScoring())
-        score = float(territory - dead - prisoners) - komi;
-    else
-        score = float(territory + stones) - komi;
-    return true;
-}
+//bool GoBoardUtil::ScorePosition(const GoBoard& bd,
+//                                const SgPointSet& deadStones, float& score)
+//{
+//    SgMarker marker;
+//    int stones = 0;
+//    int territory = 0;
+//    int dead = 0;
+//    for (GoBoard::Iterator it(bd); it; ++it)
+//    {
+//        SgPoint p = *it;
+//        if (bd.Occupied(p) && ! deadStones.Contains(p))
+//        {
+//            if (bd.GetColor(p) == SG_BLACK)
+//                ++stones;
+//            else
+//                --stones;
+//            continue;
+//        }
+//        if (marker.Contains(p))
+//            continue;
+//        int nuPoints = 0;
+//        int nuDeadWhite = 0;
+//        int nuDeadBlack = 0;
+//        bool isBlackAdjacent = false;
+//        bool isWhiteAdjacent = false;
+//        ScorePositionRecurse(bd, p, deadStones, marker, isBlackAdjacent,
+//                             isWhiteAdjacent, nuPoints, nuDeadWhite,
+//                             nuDeadBlack);
+//        if ((nuDeadWhite > 0 && nuDeadBlack > 0)
+//            || (isBlackAdjacent && nuDeadBlack > 0)
+//            || (isWhiteAdjacent && nuDeadWhite > 0))
+//            return false;
+//        dead += nuDeadBlack;
+//        dead -= nuDeadWhite;
+//        if (isBlackAdjacent && ! isWhiteAdjacent)
+//            territory += nuPoints;
+//        else if (isWhiteAdjacent && ! isBlackAdjacent)
+//            territory -= nuPoints;
+//    }
+//    int prisoners = bd.NumPrisoners(SG_BLACK) - bd.NumPrisoners(SG_WHITE);
+//    float komi = bd.Rules().Komi().ToFloat();
+//    if (bd.Rules().JapaneseScoring())
+//        score = float(territory - dead - prisoners) - komi;
+//    else
+//        score = float(territory + stones) - komi;
+//    return true;
+//}
 
 int GoBoardUtil::Stones(const GoBoard& bd, SgPoint p, SgPoint stones[])
 {
-    SG_ASSERT(bd.IsValidPoint(p));
-    SG_ASSERT(bd.Occupied(p));
+    poco_assert(bd.IsValidPoint(p));
+    poco_assert(bd.Occupied(p));
     if (bd.IsSingleStone(p))
     {
         stones[0] = p;
@@ -855,16 +848,16 @@ bool GoBoardUtil::TwoPasses(const GoBoard& bd)
            );
 }
 
-SgPointSet GoBoardUtil::Lines(const GoBoard& bd, SgGrid from, SgGrid to)
-{
-    SG_ASSERT(from >= 1);
-    SG_ASSERT(from <= to);
-    SG_ASSERT(to <= (bd.Size() + 1) / 2);
-    SgPointSet lines;
-    for (SgGrid i = from; i <= to; ++i)
-        lines |= bd.LineSet(i);
-    return lines;
-}
+//SgPointSet GoBoardUtil::Lines(const GoBoard& bd, SgGrid from, SgGrid to)
+//{
+//    poco_assert(from >= 1);
+//    poco_assert(from <= to);
+//    poco_assert(to <= (bd.Size() + 1) / 2);
+//    SgPointSet lines;
+//    for (SgGrid i = from; i <= to; ++i)
+//        lines |= bd.LineSet(i);
+//    return lines;
+//}
 
 SgRect GoBoardUtil::GetDirtyRegion(const GoBoard& bd, SgMove move,
                                    SgBlackWhite colour, bool checklibs,

@@ -6,6 +6,7 @@
 #ifndef GO_BOARDUTIL_H
 #define GO_BOARDUTIL_H
 
+#include "Poco/Debugger.h"
 #include "GoBoard.h"
 #include "SgBoardColor.h"
 #include "SgDebug.h"
@@ -248,8 +249,8 @@ namespace GoBoardUtil
                          SgArrayList<SgPoint,SG_MAXPOINT> &anchors);
 
     /** Compute the hash code for region of this board position. */
-    void RegionCode(const GoBoard& bd, const SgVector<SgPoint>& region,
-                    SgHashCode* c);
+    //void RegionCode(const GoBoard& bd, const SgVector<SgPoint>& region,
+    //                SgHashCode* c);
 
     /** Returns true iff during the first N moves of a Chinese handicap
         game. */
@@ -395,7 +396,7 @@ inline SgPoint GoBoardUtil::FindNeighbor(const BOARD& bd, SgPoint p,
         return p - SG_NS;
     if (bd.IsColor(p + SG_WE, c))
         return p + SG_WE;
-    SG_ASSERT(bd.IsColor(p - SG_WE, c));
+    poco_assert(bd.IsColor(p - SG_WE, c));
     return p - SG_WE;
 }
 
@@ -414,7 +415,7 @@ bool GoBoardUtil::IsBoardEmpty(const BOARD& bd)
 template<class BOARD>
 inline bool GoBoardUtil::IsCompletelySurrounded(const BOARD& bd, SgPoint p)
 {
-    SG_ASSERT(bd.IsEmpty(p));
+    poco_assert(bd.IsEmpty(p));
     if (bd.HasEmptyNeighbors(p))
         return false;
     if (bd.HasNeighbors(p, SG_BLACK) && bd.HasNeighbors(p, SG_WHITE))
@@ -489,12 +490,12 @@ template<class BOARD>
 SgEmptyBlackWhite GoBoardUtil::ScorePoint(const BOARD& bd, SgPoint p,
                                           bool noCheck)
 {
-    SG_DEBUG_ONLY(noCheck);
+    //SG_DEBUG_ONLY(noCheck);
     SgEmptyBlackWhite c = bd.GetColor(p);
     if (c != SG_EMPTY)
         return c;
     // Position must have only completely surrounded empty points
-    SG_ASSERT(noCheck || bd.NumEmptyNeighbors(p) == 0
+    poco_assert(noCheck || bd.NumEmptyNeighbors(p) == 0
               || GoBoardUtil::SelfAtari(bd, p));
     if (bd.NumNeighbors(p, SG_BLACK) > 0
         && bd.NumNeighbors(p, SG_WHITE) == 0)
@@ -502,13 +503,13 @@ SgEmptyBlackWhite GoBoardUtil::ScorePoint(const BOARD& bd, SgPoint p,
     else if (bd.NumNeighbors(p, SG_WHITE) > 0
              && bd.NumNeighbors(p, SG_BLACK) == 0)
     {
-        SG_ASSERT(bd.NumNeighbors(p, SG_WHITE) > 0);
+        poco_assert(bd.NumNeighbors(p, SG_WHITE) > 0);
         return SG_WHITE;
     }
     else
     {
         // Position must have no dame points
-        SG_ASSERT(noCheck || GoBoardUtil::SelfAtari(bd, p));
+        poco_assert(noCheck || GoBoardUtil::SelfAtari(bd, p));
         return SG_EMPTY;
     }
 }
@@ -563,7 +564,7 @@ inline bool GoBoardUtil::SelfAtariForColor(const BOARD& bd, SgPoint p,
     // SelfAtari(const GoBoard&,SgPoint,int&). The two versions exist
     // for efficiency (this function is called very often in UCT simulations)
 
-    SG_ASSERT(bd.IsEmpty(p));
+    poco_assert(bd.IsEmpty(p));
     // No self-atari, enough liberties
     if (bd.NumEmptyNeighbors(p) >= 2)
         return false;
@@ -614,8 +615,8 @@ inline bool GoBoardUtil::SelfAtariForColor(const BOARD& bd, SgPoint p,
         }
     }
 
-    if (lib == SG_NULLPOINT) // suicide
-        return false;
+    if (lib == SG_NULLPOINT) // suicide, XXX (problem!! false-->true)
+        return true;
     if (! hasOwnNb && hasCapture) // ko-type capture, OK
          return false;
     if (hasOwnNb && hasCapture) // check if we gained other liberties
@@ -623,7 +624,7 @@ inline bool GoBoardUtil::SelfAtariForColor(const BOARD& bd, SgPoint p,
         // lib == one of the captured stones.
        SgPoint anchors[4 + 1];
        bd.NeighborBlocks(p, toPlay, 1, anchors);
-       SG_ASSERT(bd.IsColor(lib, opp));
+       poco_assert(bd.IsColor(lib, opp));
        for (typename BOARD::StoneIterator it(bd, lib); it; ++it)
        {
            if (*it != lib && IsNeighborOfSome(bd, *it, anchors, toPlay))
@@ -636,7 +637,7 @@ inline bool GoBoardUtil::SelfAtariForColor(const BOARD& bd, SgPoint p,
 template<class BOARD>
 bool GoBoardUtil::SelfAtari(const BOARD& bd, SgPoint p, int& numStones)
 {
-    SG_ASSERT(bd.IsEmpty(p));
+    poco_assert(bd.IsEmpty(p));
     // No self-atari, enough liberties
     if (bd.NumEmptyNeighbors(p) >= 2)
         return false;
@@ -697,7 +698,7 @@ bool GoBoardUtil::SelfAtari(const BOARD& bd, SgPoint p, int& numStones)
         // lib == one of the captured stones.
        SgPoint anchors[4 + 1];
        bd.NeighborBlocks(p, toPlay, 1, anchors);
-       SG_ASSERT(bd.IsColor(lib, opp));
+       poco_assert(bd.IsColor(lib, opp));
        for (typename BOARD::StoneIterator it(bd, lib); it; ++it)
        {
            if (*it != lib && IsNeighborOfSome(bd, *it, anchors, toPlay))
@@ -743,7 +744,7 @@ float GoBoardUtil::TrompTaylorScore(const BOARD& bd, float komi,
         }
         SgStack<SgPoint,SG_MAXPOINT> stack;
         GoPointList list;
-        SG_ASSERT(c == SG_EMPTY);
+        poco_assert(c == SG_EMPTY);
         stack.Push(*it);
         mark.Include(*it);
         list.PushBack(*it);
@@ -752,7 +753,7 @@ float GoBoardUtil::TrompTaylorScore(const BOARD& bd, float komi,
         while (! stack.IsEmpty())
         {
             SgPoint p = stack.Pop();
-            SG_ASSERT(bd.GetColor(p) == SG_EMPTY);
+            poco_assert(bd.GetColor(p) == SG_EMPTY);
             ++size;
             if (bd.HasNeighbors(p, SG_BLACK))
                 adjacent[SG_BLACK] = true;
@@ -832,7 +833,7 @@ std::ostream& GoWriteBoard(std::ostream& out, const BOARD& bd)
                     buffer << '.';
                 break;
             default:
-                SG_ASSERT(false);
+                poco_assert(false);
             }
             buffer << ' ';
         }
@@ -872,70 +873,9 @@ inline std::ostream& operator<<(std::ostream& out, const GoBoard& bd)
 
 //----------------------------------------------------------------------------
 
-/** Used to restore the ko rule to its current value in an exception-safe way.
-    To use it, just declare a variable of this type on the stack for the
-    desired scope. */
-class GoRestoreKoRule
-{
-public:
-    GoRestoreKoRule(GoBoard& board);
 
-    ~GoRestoreKoRule();
 
-private:
-    GoBoard& m_board;
 
-    GoRules::KoRule m_koRule;
-
-    /** Not implemented. */
-    GoRestoreKoRule(const GoRestoreKoRule&);
-
-    /** Not implemented. */
-    GoRestoreKoRule& operator=(const GoRestoreKoRule&);
-};
-
-inline GoRestoreKoRule::GoRestoreKoRule(GoBoard& board)
-    : m_board(board),
-      m_koRule(board.Rules().GetKoRule())
-{
-}
-
-inline GoRestoreKoRule::~GoRestoreKoRule()
-{
-    m_board.Rules().SetKoRule(m_koRule);
-}
-
-//----------------------------------------------------------------------------
-
-/** Used to restore ToPlay to its current value in an exception-safe way.
-    To use it, just declare a RestoreToPlay variable on the stack for the
-    desired scope. */
-class GoRestoreToPlay
-{
-public:
-    GoRestoreToPlay(GoBoard& board)
-        : m_board(board),
-          m_oldToPlay(board.ToPlay())
-    { }
-
-    ~GoRestoreToPlay()
-    {
-        m_board.SetToPlay(m_oldToPlay);
-    }
-
-private:
-    GoBoard& m_board;
-
-    SgBlackWhite m_oldToPlay;
-
-    /** Not implemented. */
-    GoRestoreToPlay(const GoRestoreToPlay&);
-
-    /** Not implemented. */
-    GoRestoreToPlay& operator=(const GoRestoreToPlay&);
-};
-
-//----------------------------------------------------------------------------
 
 /** Iterate over all blocks' anchors on the board. */
 class GoBlockIterator
@@ -960,7 +900,7 @@ public:
 
     SgPoint operator*() const
     {
-        SG_ASSERT(*this);
+        poco_assert(*this);
         return *m_p;
     }
 
@@ -982,86 +922,7 @@ private:
     GoBlockIterator& operator=(const GoBlockIterator&);
 };
 
-//----------------------------------------------------------------------------
 
-/** Used to permit/forbid self-removal for certain periods of play.
-    Restores the setting to the previous value in an exception-safe way.
-    To use it, just declare a SelfRemoval variable on the stack for the
-    desired scope. */
-class GoRestoreSuicide
-{
-public:
-    GoRestoreSuicide(GoBoard& board, bool allow)
-        : m_board(board),
-          m_oldState(board.Rules().AllowSuicide())
-    {
-        m_board.Rules().SetAllowSuicide(allow);
-    }
-
-    ~GoRestoreSuicide()
-    {
-        m_board.Rules().SetAllowSuicide(m_oldState);
-    }
-
-private:
-    GoBoard& m_board;
-
-    bool m_oldState;
-
-    /** Not implemented. */
-    GoRestoreSuicide(const GoRestoreSuicide&);
-
-    /** Not implemented. */
-    GoRestoreSuicide& operator=(const GoRestoreSuicide&);
-};
-
-//----------------------------------------------------------------------------
-
-/** Used to alter state of repetition and self-removal for certain periods of
-    play.
-    Restores the settings to the previous values in an exception-safe way.
-    To use it, just declare a RestoreRepetitionAndRemoval variable on the
-    stack for the desired scope. */
-class GoRestoreRepetitionAndSuicide
-{
-public:
-    GoRestoreRepetitionAndSuicide(GoBoard& board, bool allowAnyRepetition,
-                                  bool allowKoRepetition, bool allowSuicide)
-        :  m_board(board),
-           m_oldAnyRepetition(board.AnyRepetitionAllowed()),
-           m_oldKoRepetition(board.KoRepetitionAllowed()),
-           m_oldSuicide(board.Rules().AllowSuicide())
-    {
-        m_board.AllowAnyRepetition(allowAnyRepetition);
-        m_board.AllowKoRepetition(allowKoRepetition);
-        m_board.Rules().SetAllowSuicide(allowSuicide);
-    }
-
-    ~GoRestoreRepetitionAndSuicide()
-    {
-        m_board.AllowAnyRepetition(m_oldAnyRepetition);
-        m_board.AllowKoRepetition(m_oldKoRepetition);
-        m_board.Rules().SetAllowSuicide(m_oldSuicide);
-    }
-
-private:
-    GoBoard& m_board;
-
-    /** arbitrary repetition for both players */
-    bool m_oldAnyRepetition;
-
-    bool m_oldKoRepetition;
-
-    /** whether self-removal is allowed */
-    bool m_oldSuicide;
-
-    /** Not implemented. */
-    GoRestoreRepetitionAndSuicide(const GoRestoreRepetitionAndSuicide&);
-
-    /** Not implemented. */
-    GoRestoreRepetitionAndSuicide&
-    operator=(const GoRestoreRepetitionAndSuicide&);
-};
 
 //----------------------------------------------------------------------------
 
@@ -1120,19 +981,7 @@ GoAdjBlockIterator<BOARD>::GoAdjBlockIterator(const BOARD& board,
     board.AdjacentBlocks(p, maxLib, m_points, MAX_ADJACENT);
 }
 
-//----------------------------------------------------------------------------
 
-class GoNbIterator
-    : public SgNbIterator
-{
-public:
-    GoNbIterator(const GoBoard& bd, SgPoint p);
-};
-
-inline GoNbIterator::GoNbIterator(const GoBoard& bd, SgPoint p)
-    : SgNbIterator(bd.BoardConst(), p)
-{
-}
 
 //----------------------------------------------------------------------------
 

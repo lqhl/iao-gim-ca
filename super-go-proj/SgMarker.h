@@ -137,7 +137,7 @@ inline SgReserveMarker::~SgReserveMarker()
 
 inline SgReserveMarker::SgReserveMarker(SgMarker& marker)
 {
-    SG_UNUSED(marker);
+//    SG_UNUSED(marker);
 }
 
 inline SgReserveMarker::~SgReserveMarker()

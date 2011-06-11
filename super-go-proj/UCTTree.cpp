@@ -30,7 +30,7 @@ void UCTTree::prune(int count) {
 	}
 }
 
-void UCTTree::expandNode(int n, Board* board) {
+void UCTTree::expandNode(int n, GoBoard* board) {
 
 }
 
@@ -60,4 +60,32 @@ void UCTTree::recycleNode(int n) {
 	assert(node[n].level != RESERVED && node[n].level != UNUSED);
 	node[n].level = RESERVED;
 	freeList.push_back(n);
+}
+
+// result is #black-stone - #white-stone
+void UCTTree::updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT result) {
+	// TODO assert the color
+
+	COUNT delta = 0.5;
+	if (result > game->komi) delta = 1;
+	else if (result < game->komi) delta = 0;
+
+	// from root go down
+	UCTNode* p = rootNode();
+	p->updateVisit(delta);
+	for(vector<int>::iterator it = seqIn.begin(); it != seqIn.end(); ++it) {
+		vector<SgPoint>& children = p->children;
+		vector<SgPoint>::iterator j = children.begin();
+		for(; j != children.end(); ++j) {
+			if (node[*j].move == *it) break;
+		}
+		poco_assert(j != children.end());
+
+		p = &node[*j];
+		p->updateVisit(delta);
+	}
+
+
+
+
 }

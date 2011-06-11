@@ -27,5 +27,10 @@ public:
 
 	UCTNode();
 
+	void updateVisit(COUNT value) {
+		visitCount += 1;
+		visitValue += value;
+	}
+
 };
 #endif
