@@ -75,6 +75,9 @@ public:
 	MOVE genMoveUCT();
 
 
+	COUNT evaluate(GoUctBoard* board) {
+		return -1;
+	}
 };
 
 #endif

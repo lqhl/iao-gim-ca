@@ -5,6 +5,9 @@
 #ifndef SG_VECTOR_H
 #define SG_VECTOR_H
 
+#undef max
+#undef min
+
 #include <algorithm>
 #include <functional>
 #include <iterator>

@@ -15,7 +15,7 @@ class UnsupportedOperationException: public exception {
 
 using Poco::Timestamp;
 UCTSearchRunner::UCTSearchRunner(SuperGoGame* game) :
-	playOutBoard(game->board) {
+	playOutBoard(game->board), uctLogger(Logger::get("UctLogger")) {
 	static int counter = 0;
 	this->game = game;
 	this->ravePara1 = 1. / game->CInitial;
@@ -48,50 +48,76 @@ void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 				break;
 		}
 
-		//		int level = board->getLevel();
-		//
-		//		vector<int> seq;
-		//		searchInTree(tree, treeLock, board, seq);
-		//		for (int j = 0; j < numPlayOut; ++j) {
-		//			vector<int> seq2;
-		//			int res = playOut(board, seq2);
-		//
-		//			upateStat(tree, treeLock, res, seq, seq2);
-		//		}
-		//
-		//		board->rollBack(level);
+		// the in-tree phase
+		treeLock->writeLock();
+		board->TakeSnapshot();
+
+		vector<int> seq;
+		searchInTree(tree, treeLock, board, seq);
+		vector<int> seq2;
+		startPlayOut(board);
+		// restore the board
+		board->RestoreSnapshot();
+		treeLock->unlock();
+
+		// play out
+		COUNT res = playOut(board, seq2);
+
+		// update the tree stat
+		upateStat(tree, treeLock, res, seq, seq2);
 
 	}
 }
 
 void UCTSearchRunner::searchInTree(UCTTree* tree, RWLock* treeLock,
-		GoBoard* board, vector<GoPlayerMove>& seq) {
+		GoBoard* board, vector<SgPoint>& seq) {
 
 }
 
-int UCTSearchRunner::playOut(GoBoard* board, vector<GoPlayerMove>& seq) {
-
+void UCTSearchRunner::startPlayOut(GoBoard* board) {
 	// some preparation work
+
+	playOutBoard.Init(*board);
+
 	capture_candidates.clear();
 
 	random_candidates.clear();
-	for (typename BOARD::Iterator it(*board); it; ++it)
+	for (GoBoard::Iterator it(*board); it; ++it)
 		if (board->IsEmpty(*it)) {
 			size_t size = random_candidates.size();
 			if (size == 0)
-				random_candidates.push_back(p);
+				random_candidates.push_back(*it);
 			else {
-				SgPoint& swapPoint = random_candidates[rand.next(size)];
-				m_candidates.push_back(swapPoint);
-				swapPoint = p;
+				int i = rand.next(size);
+				SgPoint swapPoint = random_candidates[i];
+				random_candidates.push_back(swapPoint);
+				random_candidates[i] = *it;
 			}
 		}
 
-	return -1;
 }
 
-void UCTSearchRunner::generateCaptureMoves(GoUctBoard* board, vector<
-		GoPlayerMove>& moves) {
+
+static const int MAX_GAME_LENGTH = 300;
+
+COUNT UCTSearchRunner::playOut(GoBoard* board, vector<SgPoint>& seq) {
+	//	startPlayOut(board);
+
+	seq.clear();
+	for(int i=0; i<MAX_GAME_LENGTH; ++i) {
+		GoPlayerMove move = generateMove();
+		if (move.Point() == SG_NULLMOVE) break;
+		playOutBoard.Play(move.Point());
+		if (move.Point() != SG_PASS) {
+			seq.push_back(move.Point());
+		}
+	}
+
+	return game->evaluate(&playOutBoard);
+}
+
+void UCTSearchRunner::generateCaptureMoves(GoUctBoard* board,
+		vector<SgPoint>& moves) {
 	poco_assert(moves.empty());
 	const SgBlackWhite opp = board->Opponent();
 	// For efficiency reasons, this function does not check, if the same
@@ -109,7 +135,7 @@ void UCTSearchRunner::generateCaptureMoves(GoUctBoard* board, vector<
 			continue;
 		}
 		if (board->GetColor(p) == opp)
-			moves.push_back(board->TheLiberty(p));
+			PushBack(moves, board->TheLiberty(p));
 	}
 }
 
@@ -121,7 +147,7 @@ SgPoint UCTSearchRunner::generateRandomMove(GoUctBoard* board) {
 			break;
 		--i;
 		SgPoint p = random_candidates[i];
-		if (!board.IsEmpty(p)) {
+		if (!board->IsEmpty(p)) {
 			random_candidates[i] = random_candidates[random_candidates.size()
 					- 1];
 			random_candidates.pop_back();
@@ -136,9 +162,9 @@ SgPoint UCTSearchRunner::generateRandomMove(GoUctBoard* board) {
 
 GoPlayerMove UCTSearchRunner::generateMove(GoUctBoard* board,
 		SgBlackWhite toPlay) {
-	poco_assert(ToPlay == board->ToPlay());
+	poco_assert(toPlay == board->ToPlay());
 
-	vector<GoPlayerMove> moves;
+	vector<SgPoint> moves;
 	moves.clear();
 	//	m_checked = false;
 
@@ -146,62 +172,90 @@ GoPlayerMove UCTSearchRunner::generateMove(GoUctBoard* board,
 
 	SgPoint lastMove = board->GetLastMove();
 	if (mv == SG_NULLMOVE && !SgIsSpecialMove(lastMove) // skip if Pass or Null
-			&& board->IsEmpty(m_lastMove) // skip if move was suicide
+			&& !board->IsEmpty(lastMove) // skip if move was suicide
 	) {
 		if (generateNakadeMove(board, moves)) {
 			//			m_moveType = GOUCT_NAKADE;
 			mv = randomSelect(moves);
+
+			poco_assert(mv != SG_NULLMOVE && !SgIsSpecialMove(lastMove));
+			uctLogger.debug("Nakade Move");
+
 		}
 		if (generateAtariCaptureMove(board, moves)) {
 			//			m_moveType = GOUCT_ATARI_CAPTURE;
 			mv = randomSelect(moves);
+
+			poco_assert(mv != SG_NULLMOVE && !SgIsSpecialMove(lastMove));
+			uctLogger.debug("AtariCapture Move");
 		}
 		if (mv == SG_NULLMOVE && generateAtariDefenseMove(board, moves)) {
 			//			m_moveType = GOUCT_ATARI_DEFEND;
 			mv = randomSelect(moves);
+
+			poco_assert(mv != SG_NULLMOVE && !SgIsSpecialMove(lastMove));
+			uctLogger.debug("AtariDefense Move");
 		}
 		if (mv == SG_NULLMOVE && generateLowLibertyMove(board, moves)) {
 			//			m_moveType = GOUCT_LOWLIB;
 			mv = randomSelect(moves);
+
+			poco_assert(mv != SG_NULLMOVE && !SgIsSpecialMove(lastMove));
+			uctLogger.debug("LowLiberty Move");
 		}
 		if (mv == SG_NULLMOVE && generatePatternMove(board, moves)) {
 			//			m_moveType = GOUCT_PATTERN;
 			mv = randomSelect(moves);
+
+			poco_assert(mv != SG_NULLMOVE && !SgIsSpecialMove(lastMove));
+			uctLogger.debug("Pattern Move");
 		}
 	}
 	if (mv == SG_NULLMOVE) {
 		//		m_moveType = GOUCT_CAPTURE;
-		generateCaptureMoves(moves);
+		generateCaptureMoves(board, moves);
 		mv = randomSelect(moves);
+
+		if (mv != SG_NULLMOVE) {
+			uctLogger.debug("Capture Move");
+		}
 
 	}
 	if (mv == SG_NULLMOVE) {
 		//		m_moveType = GOUCT_RANDOM;
 		mv = generateRandomMove(board);
+
+		if (mv != SG_NULLMOVE)
+			uctLogger.debug("Random Move");
 	}
 
 	if (mv == SG_NULLMOVE) {
-		m_moveType = GOUCT_PASS;
+		// m_moveType = GOUCT_PASS;
 		mv = SG_PASS;
+
+		uctLogger.debug("Pass Move");
 	} else {
-		SG_ASSERT(m_bd.IsLegal(mv));
-		m_checked = CorrectMove(GoUctUtil::DoSelfAtariCorrection, mv,
-				GOUCT_SELFATARI_CORRECTION);
-		if (USE_CLUMP_CORRECTION && !m_checked)
-			CorrectMove(GoUctUtil::DoClumpCorrection, mv,
-					GOUCT_CLUMP_CORRECTION);
+		if (!board->IsLegal(mv)) {
+			poco_error_f2 (uctLogger, "illegal move at row=%d, col=%d", Row(mv), Col(mv));
+		}
+		poco_assert(board->IsLegal(mv));
+		//m_checked = CorrectMove(GoUctUtil::DoSelfAtariCorrection, mv,
+		//		GOUCT_SELFATARI_CORRECTION);
+		//if (USE_CLUMP_CORRECTION && !m_checked)
+		//	CorrectMove(GoUctUtil::DoClumpCorrection, mv,
+		//			GOUCT_CLUMP_CORRECTION);
 	}
-	SG_ASSERT(m_bd.IsLegal(mv));
-	SG_ASSERT(mv == SG_PASS || !m_bd.IsSuicide(mv));
+	poco_assert(board->IsLegal(mv));
+	poco_assert(mv == SG_PASS || !board->IsSuicide(mv));
 
-	if (m_param.m_statisticsEnabled)
-		UpdateStatistics();
+	//if (m_param.m_statisticsEnabled)
+	//	UpdateStatistics();
 
-	return mv;
+	return GoPlayerMove(toPlay, mv);
 }
 
-void UCTSearchRunner::upateStat(UCTTree* tree, RWLock* treeLock, int result,
-		vector<GoPlayerMove>& seqIn, vector<GoPlayerMove>& seqOut) {
+void UCTSearchRunner::upateStat(UCTTree* tree, RWLock* treeLock, COUNT result,
+		vector<SgPoint>& seqIn, vector<SgPoint>& seqOut) {
 	treeLock->writeLock();
 
 	//update the RAVE values
@@ -210,6 +264,8 @@ void UCTSearchRunner::upateStat(UCTTree* tree, RWLock* treeLock, int result,
 
 	// update the move count
 	// just goes down seqIn and update
+
+	tree->updateStat(seqIn, seqOut, result);
 
 	treeLock->unlock();
 }
@@ -284,7 +340,8 @@ int UCTSearchRunner::selectChildrenRAVE(UCTTree* tree, int n) {
 	return k;
 }
 
-void genNakade(SgPoint p, GoUctBoard* board, vector<SgPoint>& moves) {
+void UCTSearchRunner::genNakade(SgPoint p, GoUctBoard* board,
+		vector<SgPoint>& moves) {
 	SgBlackWhite toPlay = board->ToPlay();
 	if (board->IsEmpty(p) && board->NumNeighbors(p, toPlay) == 0) {
 		int numEmptyNeighbors = board->NumEmptyNeighbors(p);
@@ -299,7 +356,7 @@ void genNakade(SgPoint p, GoUctBoard* board, vector<SgPoint>& moves) {
 					if (++n > 2)
 						break;
 				}
-			moves.push_back(p);
+			PushBack(moves, p);
 		} else if (numEmptyNeighbors == 1) {
 			for (SgNb4Iterator it(p); it; ++it)
 				if (board->IsEmpty(*it)) {
@@ -310,7 +367,7 @@ void genNakade(SgPoint p, GoUctBoard* board, vector<SgPoint>& moves) {
 						if (board->IsEmpty(*it2) && *it2 != p) {
 							if (board->NumEmptyNeighbors(*it2) == 1
 									&& board->NumNeighbors(*it2, toPlay) == 0)
-								moves.push_back(*it);
+								PushBack(moves, *it);
 							break;
 						}
 					break;
@@ -340,8 +397,9 @@ bool UCTSearchRunner::generateAtariCaptureMove(GoUctBoard* board, vector<
 	poco_assert(! SgIsSpecialMove(board->GetLastMove()));
 	if (board->InAtari(board->GetLastMove())) {
 		SgMove mv = board->TheLiberty(board->GetLastMove());
-		moves.push_back(mv);
-		return true;
+		PushBack(moves, mv);
+		if (!moves.empty())
+			return true;
 	}
 	return false;
 
@@ -365,12 +423,12 @@ bool UCTSearchRunner::generateAtariDefenseMove(GoUctBoard* board, vector<
 
 		// Check if move on last liberty would escape the atari
 		SgPoint theLiberty = board->TheLiberty(anchor);
-		if (!GoBoardUtil::SelfAtari(board, theLiberty))
-			moves.push_back(theLiberty);
+		if (!GoBoardUtil::SelfAtari(*board, theLiberty))
+			PushBack(moves, theLiberty);
 
 		// we can escape atari if we can capture the opponent's blocks
 		// Capture adjacent blocks
-		for (GoAdjBlockIterator<BOARD> it2(*board, anchor, 1); it2; ++it2) {
+		for (GoAdjBlockIterator<GoUctBoard> it2(*board, anchor, 1); it2; ++it2) {
 			SgPoint oppLiberty = board->TheLiberty(*it2);
 			// If opponent's last liberty is not my last liberty, we know
 			// that we will have two liberties after capturing (my last
@@ -379,7 +437,7 @@ bool UCTSearchRunner::generateAtariDefenseMove(GoUctBoard* board, vector<
 			// GoBoardUtil::SelfAtari(theLiberty), if the move escapes the
 			// atari
 			if (oppLiberty != theLiberty)
-				moves.push_back(oppLiberty);
+				PushBack(moves, oppLiberty);
 		}
 	}
 	return !moves.empty();
@@ -398,7 +456,7 @@ bool UCTSearchRunner::generateLowLibertyMove(GoUctBoard* board,
 	// take liberty of last move
 	if (board->NumLiberties(lastMove) == 2) {
 		const SgPoint anchor = board->Anchor(lastMove);
-		selectLibertyMoves(board, moves, anchor);
+		selectLibertyMove(board, moves, anchor);
 	}
 
 	if (board->NumNeighbors(lastMove, toPlay) != 0) {
@@ -419,43 +477,44 @@ bool UCTSearchRunner::generateLowLibertyMove(GoUctBoard* board,
 
 }
 
-void GeneratePatternMove(GoUctBoard* board, vector<SgPoint>& moves, SgPoint p) {
-	if (board->IsEmpty(p) && UctPatterns::matchAny(p)
-			&& !GoBoardUtil::SelfAtari(m_bd, p))
-		moves.push_back(p);
+void UCTSearchRunner::GeneratePatternMove(GoUctBoard* board,
+		vector<SgPoint>& moves, SgPoint p) {
+	if (board->IsEmpty(p) && UctPatterns::matchAny(board, p)
+			&& !GoBoardUtil::SelfAtari(*board, p))
+		PushBack(moves, p);
 }
 
-void GeneratePatternMove2(GoUctBoard* board, vector<SgPoint>& moves, SgPoint p) {
-	if (board->IsEmpty(p) && !SgPointUtil::In8Neighborhood(lastMove, p)
-			&& UctPatterns::matchAny(board, p) && !GoBoardUtil::SelfAtari(
-			*board, p))
-		moves.PushBack(p);
+void UCTSearchRunner::GeneratePatternMove2(GoUctBoard* board,
+		vector<SgPoint>& moves, SgPoint p) {
+	if (board->IsEmpty(p) && !SgPointUtil::In8Neighborhood(
+			board->GetLastMove(), p) && UctPatterns::matchAny(board, p)
+			&& !GoBoardUtil::SelfAtari(*board, p))
+		PushBack(moves, p);
 }
 bool UCTSearchRunner::generatePatternMove(GoUctBoard* board,
 		vector<SgPoint>& moves) {
-
 	SgPoint lastMove = board->GetLastMove();
-	SG_ASSERT(moves.empty());
-	SG_ASSERT(!SgIsSpecialMove(lastMove));
-	GeneratePatternMove(board, lastMove + SG_NS - SG_WE);
-	GeneratePatternMove(board, lastMove + SG_NS);
-	GeneratePatternMove(board, lastMove + SG_NS + SG_WE);
-	GeneratePatternMove(board, lastMove - SG_WE);
-	GeneratePatternMove(board, lastMove + SG_WE);
-	GeneratePatternMove(board, lastMove - SG_NS - SG_WE);
-	GeneratePatternMove(board, lastMove - SG_NS);
-	GeneratePatternMove(board, lastMove - SG_NS + SG_WE);
-	if (SECOND_LAST_MOVE_PATTERNS) {
+	poco_assert(moves.empty());
+	poco_assert(!SgIsSpecialMove(lastMove));
+	GeneratePatternMove(board, moves, lastMove + SG_NS - SG_WE);
+	GeneratePatternMove(board, moves, lastMove + SG_NS);
+	GeneratePatternMove(board, moves, lastMove + SG_NS + SG_WE);
+	GeneratePatternMove(board, moves, lastMove - SG_WE);
+	GeneratePatternMove(board, moves, lastMove + SG_WE);
+	GeneratePatternMove(board, moves, lastMove - SG_NS - SG_WE);
+	GeneratePatternMove(board, moves, lastMove - SG_NS);
+	GeneratePatternMove(board, moves, lastMove - SG_NS + SG_WE);
+	if (true) {
 		const SgPoint lastMove2 = board->Get2ndLastMove();
 		if (!SgIsSpecialMove(lastMove2)) {
-			GeneratePatternMove2(board, lastMove2 + SG_NS - SG_WE, lastMove);
-			GeneratePatternMove2(board, lastMove2 + SG_NS, lastMove);
-			GeneratePatternMove2(board, lastMove2 + SG_NS + SG_WE, lastMove);
-			GeneratePatternMove2(board, lastMove2 - SG_WE, lastMove);
-			GeneratePatternMove2(board, lastMove2 + SG_WE, lastMove);
-			GeneratePatternMove2(board, lastMove2 - SG_NS - SG_WE, lastMove);
-			GeneratePatternMove2(board, lastMove2 - SG_NS, lastMove);
-			GeneratePatternMove2(board, lastMove2 - SG_NS + SG_WE, lastMove);
+			GeneratePatternMove2(board, moves, lastMove2 + SG_NS - SG_WE);
+			GeneratePatternMove2(board, moves, lastMove2 + SG_NS);
+			GeneratePatternMove2(board, moves, lastMove2 + SG_NS + SG_WE);
+			GeneratePatternMove2(board, moves, lastMove2 - SG_WE);
+			GeneratePatternMove2(board, moves, lastMove2 + SG_WE);
+			GeneratePatternMove2(board, moves, lastMove2 - SG_NS - SG_WE);
+			GeneratePatternMove2(board, moves, lastMove2 - SG_NS);
+			GeneratePatternMove2(board, moves, lastMove2 - SG_NS + SG_WE);
 		}
 	}
 	return !moves.empty();
@@ -489,21 +548,22 @@ void UCTSearchRunner::randomMoveUpdateOnPlay(GoUctBoard* board) {
 		for (GoPointList::Iterator it(capturedStones); it; ++it) {
 			size_t size = random_candidates.size();
 			if (size == 0)
-				random_candidates.push_back(p);
+				random_candidates.push_back(*it);
 			else {
 				SgPoint& swapPoint = random_candidates[rand.next(size)];
-				m_candidates.push_back(swapPoint);
-				swapPoint = p;
+				random_candidates.push_back(swapPoint);
+				swapPoint = *it;
 			}
 		}
 	}
 }
 
-void UCTSearchRunner::selectLibertyMove(GoUctBoard* board, vector<SgPoint>& moves, SgPoint achor) {
+void UCTSearchRunner::selectLibertyMove(GoUctBoard* board,
+		vector<SgPoint>& moves, SgPoint anchor) {
 	// TODO simplified version
 	SgPoint ignoreOther;
-	if (!GoBoardUtil::IsSimpleChain(*board, block, ignoreOther))
-		for (typename BOARD::LibertyIterator it(*board, block); it; ++it)
+	if (!GoBoardUtil::IsSimpleChain(*board, anchor, ignoreOther))
+		for (GoUctBoard::LibertyIterator it(*board, anchor); it; ++it)
 			if (!GoBoardUtil::SelfAtari(*board, *it))
-				moves.push_back(*it);
+				PushBack(moves, *it);
 }

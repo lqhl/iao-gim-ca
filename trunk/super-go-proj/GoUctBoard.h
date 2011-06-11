@@ -23,6 +23,7 @@
 #include "SgPointIterator.h"
 
 using namespace std;
+using namespace SgPointUtil;
 //----------------------------------------------------------------------------
 
 /** Go board optimized for Monte Carlo simulations.
@@ -240,22 +241,30 @@ public:
         state. */
     void CheckConsistency() const;
 
+	void printBoard(ostream& out) {
+		for (int i = 1; i <= m_size; i++) {
+			for (int j = 1; j <= m_size; j++) {
+				if (IsEmpty(SgPointUtil::Pt(i, j)))
+					out << '.';
+				else
+					out << SgBW(GetColor(SgPointUtil::Pt(i, j)));
+			}
+			out << endl;
+		}
+		out << endl;
+	}
+
+	void printBlocks(ostream& out) {
+		for (int i = 0; i < SG_MAXPOINT; i++)
+			if (m_block[i] != NULL) {
+				m_block[i]->print(out);
+			}
+			out << endl;
+	}
+
     void printAll(ostream& out) {
-    	for (int i = 1; i <= m_size; i++) {
-    		for (int j = 1; j <= m_size; j++) {
-    			if (IsEmpty(SgPointUtil::Pt(i, j)))
-    				out << '.';
-    			else
-    				out << SgBW(GetColor(SgPointUtil::Pt(i, j)));
-    		}
-    		out << endl;
-    	}
-    	out << endl;
-    	for (int i = 0; i < SG_MAXPOINT; i++)
-    		if (m_block[i] != NULL) {
-    			m_block[i]->print(out);
-    		}
-    	out << endl;
+		printBoard(out);
+		printBlocks(out);
     }
 
 private:

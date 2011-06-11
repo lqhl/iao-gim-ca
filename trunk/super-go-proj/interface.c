@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <stdlib.h>  /* for rand() and srand() */
 
-#include "brown.h"
+//#include "brown.h"
 #include "gtp.h"
 
 /* Forward declarations. */
