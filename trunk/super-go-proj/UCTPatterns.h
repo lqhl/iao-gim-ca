@@ -1,14 +1,15 @@
-
 #ifndef UCTPATTERNS_H
 #define UCTPATTERNS_H
 
+#include "GoBoard.h"
 #include "GoUctBoard.h"
 #include "Poco/Debugger.h"
 #include "SgPoint.h"
+#include "GoBoardUtil.h"
 using Poco::Debugger;
 
 using SgPointUtil::Pt;
-
+using GoBoardUtil::getGo8Neighbors;
 
 class UctPatterns {
 public:
@@ -22,7 +23,6 @@ public:
 	static bool edgeCode[2][POWER3_9];
 
 	static const int BOARD_SIZE = 13;
-
 
 	static int up[SG_MAXPOINT];
 
@@ -43,29 +43,35 @@ public:
 	}
 
 	static int OtherDir(int dir) {
-		if (dir == SG_NS || dir == -SG_NS) return SG_WE;
+		if (dir == SG_NS || dir == -SG_NS)
+			return SG_WE;
 
-		if (dir == SG_WE || dir == -SG_WE) return SG_NS;
+		if (dir == SG_WE || dir == -SG_WE)
+			return SG_NS;
 
 		poco_assert(false);
 		return -1;
 	}
 	static void init_board_const(int boardSize) {
-		for(int i=1; i<=boardSize; ++i) {
-			for(int j=1; j<=boardSize; ++j) {
-				SgPoint p = Pt(i,j);
-				int line1 = min(i, boardSize+1-i);
-				int line2 = min(j, boardSize+1-j);
+		for (int i = 1; i <= boardSize; ++i) {
+			for (int j = 1; j <= boardSize; ++j) {
+				SgPoint p = Pt(i, j);
+				int line1 = min(i, boardSize + 1 - i);
+				int line2 = min(j, boardSize + 1 - j);
 				line[p] = min(line1, line2);
 				pos[p] = max(line1, line2);
 
 				up[p] = 0;
 
 				if (line[p] == 1 && pos[p] != 1) {
-					if (i == 1) up[p] = SG_NS;
-					else if (i == boardSize) up[p] = -SG_NS;
-					else if (j == 1) up[p] = SG_WE;
-					else if (j == boardSize) up[p] = -SG_WE;
+					if (i == 1)
+						up[p] = SG_NS;
+					else if (i == boardSize)
+						up[p] = -SG_NS;
+					else if (j == 1)
+						up[p] = SG_WE;
+					else if (j == boardSize)
+						up[p] = -SG_WE;
 
 					poco_assert(up[p] != 0);
 				}
@@ -76,7 +82,8 @@ public:
 	static bool initialized;
 
 	static void init() {
-		if (initialized) return;
+		if (initialized)
+			return;
 		init_board_const(BOARD_SIZE);
 
 		for (int i = 0; i < 2; ++i) {
@@ -139,7 +146,7 @@ public:
 	}
 
 	// p and q maybe the same
-    // #pragma warning(disable : 4996)
+	// #pragma warning(disable : 4996)
 	static void rotate(int* p, int* q) {
 		int t[9];
 		for (int i = 0; i < 9; ++i) {
@@ -247,7 +254,8 @@ public:
 		edgeCode[color][k] = true;
 	}
 
-	static bool matchAny(GoUctBoard* bd, SgPoint p) {
+	template<typename BOARD>
+	static bool matchAny(BOARD* bd, SgPoint p) {
 		poco_assert(bd->Size() == BOARD_SIZE);
 
 		if (Line(p) > 1) {
@@ -263,8 +271,7 @@ public:
 			q[8] = bd->GetColor(p + SG_NS + SG_WE);
 
 			return matchCenter(q, bd->ToPlay());
-		}
-		else if (Pos(p) > 1) {
+		} else if (Pos(p) > 1) {
 			int q[6];
 			int up = Up(p);
 			int left = OtherDir(up);
@@ -283,7 +290,7 @@ public:
 
 	static bool matchCenter(SgPoint *p, SgBlackWhite color) {
 		int k = 0;
-		for(int i=0; i<9; ++i) {
+		for (int i = 0; i < 9; ++i) {
 			k = k * 3 + p[i];
 		}
 		return centerCode[color][k];
@@ -291,7 +298,7 @@ public:
 
 	static bool matchEdge(SgPoint *p, SgBlackWhite color) {
 		int k = 0;
-		for(int i=0; i<6; ++i) {
+		for (int i = 0; i < 6; ++i) {
 			k = k * 3 + p[i];
 		}
 		return edgeCode[color][k];
@@ -376,7 +383,8 @@ public:
 	static void test() {
 		init();
 
-		int p[9] = {SG_WHITE, SG_BLACK, SG_WHITE, SG_EMPTY, SG_EMPTY, SG_EMPTY, SG_EMPTY, SG_EMPTY, SG_EMPTY};
+		int p[9] = { SG_WHITE, SG_BLACK, SG_WHITE, SG_EMPTY, SG_EMPTY,
+				SG_EMPTY, SG_EMPTY, SG_EMPTY, SG_EMPTY };
 
 		poco_assert(matchCenter(p, SG_WHITE));
 		poco_assert(matchCenter(p, SG_WHITE));
@@ -389,7 +397,8 @@ public:
 		mirror(p, s);
 		poco_assert(matchCenter(q, SG_BLACK));
 
-		int e[6] = {SG_WHITE, SG_EMPTY, SG_EMPTY, SG_BLACK, SG_EMPTY, SG_BLACK};
+		int e[6] =
+				{ SG_WHITE, SG_EMPTY, SG_EMPTY, SG_BLACK, SG_EMPTY, SG_BLACK };
 
 		poco_assert(matchEdge(e, SG_BLACK));
 		poco_assert(matchEdge(e, SG_WHITE));
@@ -397,13 +406,126 @@ public:
 	}
 
 	static void printPattern(SgPoint* p, ostream& out) {
-		for(int i=0; i<3; ++i) {
-			for(int j=0; j<3; ++j) {
-				out << SgEBW(p[i*3 + j]);
+		for (int i = 0; i < 3; ++i) {
+			for (int j = 0; j < 3; ++j) {
+				out << SgEBW(p[i * 3 + j]);
 			}
 			out << endl;
 		}
 	}
+
+	inline static bool match2PeepConnect(GoBoard* board, SgPoint p) {
+		return false;
+	}
+
+	inline static bool match2Hane(GoBoard* board, SgPoint p) {
+		return false;
+	}
+
+	inline static bool match2Connect(GoBoard* board, SgPoint p) {
+		return false;
+	}
+
+	inline static bool match2Wall(GoBoard* board, SgPoint p) {
+		return false;
+	}
+
+	inline static bool match2BadKogeima(GoBoard* board, SgPoint p) {
+		SgBlackWhite me = board->ToPlay(), opponent = 1 - me;
+		bool partner = false;
+		int nb[3];
+		fill(nb, nb + 3, 0);
+
+		vector<SgPoint> neighbors;
+		neighbors.reserve(8);
+		getGo8Neighbors(*board, p, neighbors);
+		SgPoint x;
+		for (vector<SgPoint>::iterator it = neighbors.begin(); it
+				!= neighbors.end(); ++it) {
+			++nb[board->GetColor(*it)];
+			if (board->GetColor(*it) == opponent)
+				x = *it;
+		}
+
+
+
+		if (!(nb[me] == 0 && nb[opponent] == 1))
+			return false;
+
+		int row = Row(p), col = Col(p);
+
+		if (x - p == SG_NS || x - p == -SG_NS) {
+			if (col > 2 && board->GetColor(x - SG_WE) == SG_EMPTY
+					&& board->GetColor(x - SG_WE - SG_WE) == me)
+				return true;
+			if (col + 1 < BOARD_SIZE && board->GetColor(x + SG_WE)
+					== SG_EMPTY && board->GetColor(x + SG_WE + SG_WE) == me)
+				return true;
+		}
+		else if (x - p == SG_WE || x - p == -SG_WE) {
+			if (row > 2 && board->GetColor(x - SG_NS) == SG_EMPTY
+					&& board->GetColor(x - SG_NS - SG_NS) == me)
+				return true;
+			if (row + 1 < BOARD_SIZE && board->GetColor(x + SG_NS)
+					== SG_EMPTY && board->GetColor(x + SG_NS + SG_NS) == me)
+				return true;
+		}
+
+		return false;
+	}
+
+	inline static bool match2EmptyTriangle(GoBoard* board, SgPoint p) {
+		SgBlackWhite me = board->ToPlay(), opponent = 1 - me;
+		int row = Row(p), col = Col(p);
+
+
+		if (row > 1 && col > 1) {
+			int nb[3];
+			fill(nb, nb+3, 0);
+			++nb[board->GetColor(p)];
+			++nb[board->GetColor(p - SG_NS)];
+			++nb[board->GetColor(p - SG_WE)];
+			++nb[board->GetColor(p - SG_NS - SG_WE)];
+			if (nb[me] == 3 && nb[SG_EMPTY] == 1) return true;
+
+		}
+
+		if (row > 1 && col < BOARD_SIZE) {
+			int nb[3];
+			fill(nb, nb+3, 0);
+			++nb[board->GetColor(p)];
+			++nb[board->GetColor(p - SG_NS)];
+			++nb[board->GetColor(p + SG_WE)];
+			++nb[board->GetColor(p - SG_NS + SG_WE)];
+			if (nb[me] == 3 && nb[SG_EMPTY] == 1) return true;
+
+		}
+
+		if (row < BOARD_SIZE && col > 1) {
+			int nb[3];
+			fill(nb, nb+3, 0);
+			++nb[board->GetColor(p)];
+			++nb[board->GetColor(p + SG_NS)];
+			++nb[board->GetColor(p - SG_WE)];
+			++nb[board->GetColor(p + SG_NS - SG_WE)];
+			if (nb[me] == 3 && nb[SG_EMPTY] == 1) return true;
+
+		}
+
+		if (row < BOARD_SIZE && col < BOARD_SIZE) {
+			int nb[3];
+			fill(nb, nb+3, 0);
+			++nb[board->GetColor(p)];
+			++nb[board->GetColor(p + SG_NS)];
+			++nb[board->GetColor(p + SG_WE)];
+			++nb[board->GetColor(p + SG_NS + SG_WE)];
+			if (nb[me] == 3 && nb[SG_EMPTY] == 1) return true;
+
+		}
+
+		return false;
+	}
+
 };
 
 #endif

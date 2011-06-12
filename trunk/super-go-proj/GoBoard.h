@@ -112,6 +112,10 @@ public:
 
     void printAll(ostream& out);
 
+    void printBoard(ostream& out);
+    void printBlocks(ostream& out);
+
+
     /** Number of calls to Play since creation of this board. */
     unsigned long long CountPlay() const;
 

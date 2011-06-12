@@ -57,7 +57,7 @@ public:
 
 	// search in tree, from the root to a terminal node
 	// save the result in seq
-	void searchInTree(UCTTree* tree, RWLock* treeLock, GoBoard* board, vector<
+	bool searchInTree(UCTTree* tree, RWLock* treeLock, GoBoard* board, vector<
 			SgPoint>& seq);
 
 	// returns the result of playOut
@@ -83,13 +83,13 @@ public:
 			SgPoint>& seqIn, vector<SgPoint>& seqOut);
 
 	/* the following four functions select children in tree based on different heuristics*/
-	int selectChildrenUCT(UCTTree* tree, int n);
+	UCTNode* selectChildrenUCT(UCTTree* tree, UCTNode* node);
 
-	int selectChildrenCount(UCTTree* tree, int n);
+	UCTNode* selectChildrenCount(UCTTree* tree, UCTNode* node);
 
-	int selectChildrenMEAN(UCTTree* tree, int n);
+	UCTNode* selectChildrenMEAN(UCTTree* tree, UCTNode* node);
 
-	int selectChildrenRAVE(UCTTree* tree, int n);
+	UCTNode* selectChildrenRAVE(UCTTree* tree, UCTNode* node);
 
 	virtual void run();
 

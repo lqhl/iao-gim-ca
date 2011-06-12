@@ -7,6 +7,7 @@ void UCTNode::clear() {
 	this->visitValue = 0;
 	this->level = UNUSED;
 	this->children.clear();
+	this->fullyExpanded = false;
 }
 
 UCTNode::UCTNode() {
