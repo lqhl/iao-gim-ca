@@ -3,7 +3,8 @@
 #include "util/util.h"
 #include <assert.h>
 
-SuperGoGame::SuperGoGame() : board(BOARD_SIZE) {
+SuperGoGame::SuperGoGame() :
+	board(BOARD_SIZE) {
 
 	numNode = Util::getInt("NumNode");
 
@@ -19,42 +20,46 @@ SuperGoGame::SuperGoGame() : board(BOARD_SIZE) {
 
 	firstPlayValue = Util::getDouble("FirstPlayUrgencey");
 
+	timeLimit = Util::getInt("TimeLimit");
+
+	numThread = Util::getInt("NumThread");
+
 	treeLock = new RWLock();
 
-	searchTime = TIME_LIMIT - 500;
+	searchTime = timeLimit - 500;
 
 }
 
 void SuperGoGame::setPlayer(int player) {
-	assert(player == WHITE || player == BLACK);
+	assert(player == SG_WHITE || player == SG_BLACK);
 	this->player = player;
-	this->opponent = player == WHITE ? BLACK : WHITE;
+	this->opponent = player == SG_WHITE ? SG_BLACK : SG_WHITE;
 }
 
-void SuperGoGame::rcvMove(MOVE move, COLOR color) {
-//	if (move == NULL_MOVE) {
-//		assert(board.getLevel() == 0 && player == BLACK);
-//	}
-//	else {
-//		board.execute(move);
-//	}
-
+void SuperGoGame::execute(SgPoint move, SgBlackWhite color) {
+	board.Play(move, color);
+	tree->update(move);
 }
 
-MOVE SuperGoGame::genMoveUCT() {
-	for(int i=0; i<NUM_THREAD; ++i) {
-		workers[i]->start();
+SgPoint SuperGoGame::genMoveUCT() {
+	if (numThread == 1) {
+		workers[0]->run();
+	} else {
+		for (int i = 0; i < numThread; ++i) {
+			workers[i]->start();
+		}
+		for (int i = 0; i < numThread; ++i) {
+			workers[i]->thread.join();
+		}
 	}
-	for(int i=0; i<NUM_THREAD; ++i) {
-		workers[i]->thread.join();
-	}
 
-	int n = workers[0]->selectChildrenCount(tree, tree->root);
-	return tree->node[n].move;
+	UCTNode* next = workers[0]->selectChildrenCount(tree, tree->rootNode());
+	return next->move;
 }
+
 
 void SuperGoGame::init() {
-	for(int i=0; i<NUM_THREAD; ++i) {
+	for (int i = 0; i < numThread; ++i) {
 		workers.push_back(new UCTSearchRunner(this));
 	}
 

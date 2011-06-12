@@ -7,6 +7,7 @@
 #include "TestMCSimulation.h"
 #include "util/util.h"
 #include "testHashTable.h"
+#include "SuperGoGame.h"
 
 using namespace std;
 
@@ -39,11 +40,18 @@ void testGoUctBoard() {
 
 int main() {
 	// !!! IMPORTANT
-	//Util::init("super-go.config");
-	//UctPatterns::init();
+	Util::init("super-go.config");
+	UctPatterns::init();
 
-	//testHashTable();
-	testVector();
+	SuperGoGame* game = new SuperGoGame();
+	game->init();
+
+	ofstream out("super-go-test.ext");
+	game->testRun(20, out);
+
+
+//	testHashTable();
+	//testVector();
 
 //	Logger::get("SimulationLogger").error("Hello World! Error Just Occurred.");
 	

@@ -5,7 +5,7 @@ using Poco::HashMap;
 void testHashTable() {
 	
 	for(int i=0; i<100000; ++i) {
-		HashMap<int, int> map;
+		HashMap<int, int> map(200);
 		for(int j=0; j<100; ++j) {
 			map.insert(HashMap<int, int>::PairType(j, j));
 		}

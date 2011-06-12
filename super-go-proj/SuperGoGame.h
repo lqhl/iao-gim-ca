@@ -6,12 +6,15 @@
 #include "GoBoard.h"
 #include "UCTTree.h"
 #include "Poco/RWLock.h"
+#include "GoBoardUtil.h"
 #include <vector>
 #include <string>
 
 using std::string;
 using std::vector;
 using Poco::RWLock;
+
+using GoBoardUtil::getGoNeighbors;
 
 
 class SuperGoGame;
@@ -22,11 +25,11 @@ typedef void (SuperGoGame::*GenMoveFunc)();
 class SuperGoGame {
 public:
 	static const int BOARD_SIZE = 13;
-	static const int NS = BOARD_SIZE+1, WE = 1;
+//	static const int NS = BOARD_SIZE+1, WE = 1;
 
-	static const int NUM_THREAD = 2;
+	int numThread;
 
-	static const int TIME_LIMIT = 10000; // in milliseconds
+	int timeLimit; // in milliseconds
 
 	/* some configuration parameters */
 	// for each play-in-tree, how many play-out will be simulated
@@ -68,15 +71,69 @@ public:
 
 	void init();
 
-	void rcvMove(MOVE move, COLOR color);
+	void execute(SgPoint move, SgBlackWhite color);
 
 	// given a move, generate a new move
 
-	MOVE genMoveUCT();
+	SgPoint genMoveUCT();
 
 
 	COUNT evaluate(GoUctBoard* board) {
-		return -1;
+		int white = 0, black = 0;
+		bool marked[SG_MAXPOINT];
+		fill(marked, marked+SG_MAXPOINT, false);
+		for(GoUctBoard::Iterator it(*board); it; ++it) {
+			SgBoardColor c = board->GetColor(*it);
+			poco_assert(c != SG_BORDER);
+			if (c == SG_BLACK) black += 2;
+			else if (c == SG_WHITE) white += 2;
+			else if (marked[*it]) continue;
+
+			// flood
+
+			SgPoint stack[SG_MAXPOINT];
+			int k = 0;
+			int num = 0;
+			bool whiteNb = false, blackNb = false;
+			marked[*it] = true;
+			stack[k++] = *it;
+
+			vector<SgPoint> nb;
+			while(k > 0) {
+				SgPoint cur = stack[--k];
+				nb.clear();
+				//nb.reserve(4);
+				getGoNeighbors(*board, *it, nb);
+				for(vector<SgPoint>::iterator j = nb.begin(); j != nb.end(); ++j) {
+					if (board->GetColor(*j) == SG_BLACK) blackNb = true;
+					else if (board->GetColor(*j) == SG_WHITE) whiteNb = true;
+					else {
+						poco_assert(board->GetColor(*j) == SG_EMPTY);
+						if (!marked[*j]) {
+							marked[*j] = true;
+							stack[k++] = *j;
+							++num;
+						}
+					}
+				}
+
+			}
+
+			if (blackNb) black += num;
+			if (!whiteNb) black += num;
+			if (whiteNb) white += num;
+			if (!blackNb) white += num;
+		}
+		return (black - white) / 2.0;
+	}
+
+	void testRun(int num, ostream& out) {
+		for(int i=0; i<num; ++i) {
+			SgPoint move = genMoveUCT();
+			execute(move, i % 2 == 0 ? SG_BLACK : SG_WHITE);
+
+			board.printBoard(out);
+		}
 	}
 };
 

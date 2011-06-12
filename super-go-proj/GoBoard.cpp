@@ -834,7 +834,7 @@ void GoBoard::RestoreSnapshot()
     CheckConsistency();
 }
 
-void GoBoard::printAll(ostream& out) {
+void GoBoard::printBoard(ostream& out) {
 	for (int i = 1; i <= m_size; i++) {
 		for (int j = 1; j <= m_size; j++) {
 			char ch;
@@ -848,11 +848,20 @@ void GoBoard::printAll(ostream& out) {
 		out << endl;
 	}
 	out << endl;
+
+}
+
+void GoBoard::printBlocks(ostream& out) {
 	for (int i = 0; i < SG_MAXPOINT; i++)
 		if (m_state.m_block[i] != NULL) {
 			m_state.m_block[i]->print(out);
 		}
 	out << endl;
+}
+
+void GoBoard::printAll(ostream& out) {
+	printBoard(out);
+	printBlocks(out);
 }
 
 //----------------------------------------------------------------------------

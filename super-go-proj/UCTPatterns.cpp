@@ -1,5 +1,4 @@
 #include "UCTPatterns.h"
-
 bool UctPatterns::centerCode[2][UctPatterns::POWER3_9];
 
 bool UctPatterns::edgeCode[2][UctPatterns::POWER3_9];

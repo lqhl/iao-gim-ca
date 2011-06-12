@@ -41,7 +41,8 @@ void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 	long limit = (long) timeLimit * 1000;
 	Timestamp timer;
 
-	for (int i = 0;; ++i) {
+	bool success = true;
+	for (int i = 0; success; ++i) {
 		// break the buffer
 		if (i % 100 == 0) {
 			if (timer.elapsed() >= limit)
@@ -53,25 +54,49 @@ void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 		board->TakeSnapshot();
 
 		vector<int> seq;
-		searchInTree(tree, treeLock, board, seq);
+		// success denote whether we have reached a leaf node
+		success = searchInTree(tree, treeLock, board, seq);
+
 		vector<int> seq2;
-		startPlayOut(board);
+		if (success) {
+			startPlayOut(board);
+		}
+
 		// restore the board
 		board->RestoreSnapshot();
 		treeLock->unlock();
 
-		// play out
-		COUNT res = playOut(board, seq2);
+		if (success) {
+			// play out
+			COUNT res = playOut(board, seq2);
 
-		// update the tree stat
-		upateStat(tree, treeLock, res, seq, seq2);
+			// update the tree stat
+			upateStat(tree, treeLock, res, seq, seq2);
+		}
 
 	}
 }
 
-void UCTSearchRunner::searchInTree(UCTTree* tree, RWLock* treeLock,
+bool UCTSearchRunner::searchInTree(UCTTree* tree, RWLock* treeLock,
 		GoBoard* board, vector<SgPoint>& seq) {
+	// TODO
 
+	UCTNode* p = tree->rootNode();
+	bool deepen = true;
+	while (deepen) {
+		deepen = p->hasChildren();
+		bool success = tree->tryExpand(board, p);
+		if (!success) {
+			return false;
+		}
+		p = selectChildrenUCT(tree, p);
+		// XXX only for debug usage
+		poco_assert(p->move != SG_PASS && p->move != SG_NULLMOVE);
+		seq.push_back(p->move);
+		board->Play(p->move);
+		tree->update(p->move);
+	}
+	return true;
 }
 
 void UCTSearchRunner::startPlayOut(GoBoard* board) {
@@ -97,16 +122,16 @@ void UCTSearchRunner::startPlayOut(GoBoard* board) {
 
 }
 
-
 static const int MAX_GAME_LENGTH = 300;
 
 COUNT UCTSearchRunner::playOut(GoBoard* board, vector<SgPoint>& seq) {
 	//	startPlayOut(board);
 
 	seq.clear();
-	for(int i=0; i<MAX_GAME_LENGTH; ++i) {
+	for (int i = 0; i < MAX_GAME_LENGTH; ++i) {
 		GoPlayerMove move = generateMove();
-		if (move.Point() == SG_NULLMOVE) break;
+		if (move.Point() == SG_NULLMOVE)
+			break;
 		playOutBoard.Play(move.Point());
 		if (move.Point() != SG_PASS) {
 			seq.push_back(move.Point());
@@ -270,71 +295,77 @@ void UCTSearchRunner::upateStat(UCTTree* tree, RWLock* treeLock, COUNT result,
 	treeLock->unlock();
 }
 
-int UCTSearchRunner::selectChildrenUCT(UCTTree* tree, int n) {
-	int k = -1;
+UCTNode* UCTSearchRunner::selectChildrenUCT(UCTTree* tree, UCTNode* node) {
+	UCTNode* k = NULL;
 	COUNT best = -1;
-	UCTNode& node = tree->node[n];
-	vector<int>& v = node.children;
-	for (int i = 0; i < v.size(); ++i) {
-		UCTNode& m = tree->node[v[i]];
+	vector<UCTNode*>& v = node->children;
+	bool blackMove = node->level % 2 == 0;
+
+	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
+		UCTNode& m = *(*it);
 		double raveWeight = m.raveCount / (ravePara1 + ravePara2 * m.raveCount);
 		double moveWeight = m.visitCount;
-		double uct = CUCT * sqrt(log(node.visitCount) / (m.visitCount + 1));
+		double uct = CUCT * sqrt(log(node->visitCount) / (m.visitCount + 1));
 		double res = (raveWeight * m.raveValue + moveWeight * m.visitValue)
 				/ (raveWeight + moveWeight) + uct;
 
-		if (k == -1 || res > best) {
+		if (k == NULL || (blackMove && res > best)
+				|| (!blackMove && res < best)) {
 			best = res;
-			k = v[i];
+			k = &m;
 		}
 	}
 	return k;
 }
 
-int UCTSearchRunner::selectChildrenCount(UCTTree* tree, int n) {
-	int k = -1;
+UCTNode* UCTSearchRunner::selectChildrenCount(UCTTree* tree, UCTNode* node) {
+	UCTNode* k = NULL;
 	COUNT best = -1;
-	UCTNode& node = tree->node[n];
-	vector<int>& v = node.children;
-	for (int i = 0; i < v.size(); ++i) {
-		UCTNode& m = tree->node[v[i]];
+	vector<UCTNode*>& v = node->children;
+	bool blackMove = node->level % 2 == 0;
+
+	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
+		UCTNode& m = *(*it);
 		if (m.visitCount > best) {
 			best = m.visitCount;
-			k = v[i];
+			k = &m;
 		}
 	}
 	return k;
 }
 
-int UCTSearchRunner::selectChildrenMEAN(UCTTree* tree, int n) {
-	int k = -1;
+UCTNode* UCTSearchRunner::selectChildrenMEAN(UCTTree* tree, UCTNode* node) {
+	UCTNode* k = NULL;
 	COUNT best = -1;
-	UCTNode& node = tree->node[n];
-	vector<int>& v = node.children;
-	for (int i = 0; i < v.size(); ++i) {
-		UCTNode& m = tree->node[v[i]];
-		if (k == -1 || m.visitValue > best) {
+	vector<UCTNode*>& v = node->children;
+	bool blackMove = node->level % 2 == 0;
+
+	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
+		UCTNode& m = *(*it);
+		if (k == NULL || (blackMove && m.visitValue > best) || (!blackMove
+				&& m.visitValue < best)) {
 			best = m.visitValue;
-			k = v[i];
+			k = &m;
 		}
 	}
 	return k;
 }
 
-int UCTSearchRunner::selectChildrenRAVE(UCTTree* tree, int n) {
-	int k = -1;
+UCTNode* UCTSearchRunner::selectChildrenRAVE(UCTTree* tree, UCTNode* node) {
+	UCTNode* k = NULL;
 	COUNT best = -1;
-	UCTNode& node = tree->node[n];
-	vector<int>& v = node.children;
-	for (int i = 0; i < v.size(); ++i) {
-		UCTNode& m = tree->node[v[i]];
+	vector<UCTNode*>& v = node->children;
+	bool blackMove = node->level % 2 == 0;
+
+	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
+		UCTNode& m = *(*it);
 		double raveWeight = m.raveCount / (ravePara1 + ravePara2 * m.raveCount);
 		double moveWeight = m.visitCount;
 		double res = (raveWeight * m.raveValue + moveWeight * m.visitValue)
 				/ (raveWeight + moveWeight);
-		if (k == -1 || res > best) {
+		if (k == NULL || (blackMove && res > best) || (blackMove && res < best)) {
 			best = res;
-			k = v[i];
+			k = &m;
 		}
 	}
 	return k;
