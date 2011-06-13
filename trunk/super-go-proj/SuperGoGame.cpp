@@ -1,6 +1,7 @@
 #include "SuperGo.h"
 #include "SuperGoGame.h"
 #include "util/util.h"
+#include <cstdio>
 #include <assert.h>
 
 SuperGoGame::SuperGoGame() :
@@ -16,9 +17,9 @@ SuperGoGame::SuperGoGame() :
 
 	CUCT = Util::getDouble("CUCT");
 
-	komi = Util::getInt("Komi");
+	komi = Util::getDouble("Komi");
 
-	firstPlayValue = Util::getDouble("FirstPlayUrgencey");
+	firstPlayValue = Util::getDouble("FirstPlayUrgency");
 
 	timeLimit = Util::getInt("TimeLimit");
 
@@ -53,8 +54,23 @@ SgPoint SuperGoGame::genMoveUCT() {
 		}
 	}
 
-	UCTNode* next = workers[0]->selectChildrenCount(tree, tree->rootNode());
-	return next->move;
+	UCTNode* next = workers[0]->selectChildrenMEAN(tree, tree->rootNode());
+	if (Util::SearchDebugEnabled()) {
+		UCTNode* n = tree->rootNode();
+		fprintf(Util::LogFile(), "children of root:\n");
+		for(vector<UCTNode*>::iterator it = n->children.begin(); it != n->children.end(); ++it) {
+			fprintf(Util::LogFile(), "\t");
+			(*it)->print(Util::LogFile());
+			fprintf(Util::LogFile(), "\n");
+		}
+		fprintf(Util::LogFile(), "** CHOICE ** ");
+		next->print(Util::LogFile());
+		fprintf(Util::LogFile(), "\n");
+
+		fflush(Util::LogFile());
+	}
+
+	return next != NULL ? next->move : SG_PASS;
 }
 
 

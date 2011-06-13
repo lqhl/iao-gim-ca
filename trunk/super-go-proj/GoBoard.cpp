@@ -842,7 +842,6 @@ void GoBoard::printBoard(ostream& out) {
 				ch = '.';
 			else
 				ch = SgBW(GetColor(SgPointUtil::Pt(i, j)));
-			cout << ch;
 			out << ch;
 		}
 		out << endl;

@@ -58,7 +58,7 @@ public:
 	// search in tree, from the root to a terminal node
 	// save the result in seq
 	bool searchInTree(UCTTree* tree, RWLock* treeLock, GoBoard* board, vector<
-			SgPoint>& seq);
+			SgPoint>& seq, BoardState& state);
 
 	// returns the result of playOut
 	// from the state of the board, start MC-simulation
