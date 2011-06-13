@@ -269,6 +269,8 @@ void GoUctBoard::Init(const GoBoard& bd)
                 block.m_liberties.PushBack(*it2);
         }
     }
+    m_boardIter = bd.m_boardIter;
+    m_boardIterEnd = bd.m_boardIterEnd;
     CheckConsistency();
 }
 

@@ -5,6 +5,7 @@
 #include "util/util.h"
 #include "UCTPatterns.h"
 #include "GoBoardUtil.h"
+#include <cstdio>
 #include <typeinfo>
 
 using std::exception;
@@ -38,13 +39,15 @@ void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 		GoBoard* board, UCTTree* tree, RWLock* treeLock) {
 	playOutBoard.Init(*board);
 
-	long limit = (long) timeLimit * 1000;
+	long long limit = ((long long) timeLimit) * 1000;
 	Timestamp timer;
 
 	bool success = true;
-	for (int i = 0; success; ++i) {
+	int i;
+	for (i = 0; success; ++i) {
 		// break the buffer
-		if (i % 100 == 0) {
+		if (i > 0 && i % 100 == 0) {
+			//cerr << timer.elapsed() << " " << limit << endl;
 			if (timer.elapsed() >= limit)
 				break;
 		}
@@ -55,10 +58,11 @@ void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 
 		vector<int> seq;
 		// success denote whether we have reached a leaf node
-		success = searchInTree(tree, treeLock, board, seq);
+		BoardState state = NOT_PROVEN;
+		success = searchInTree(tree, treeLock, board, seq, state);
 
 		vector<int> seq2;
-		if (success) {
+		if (success && state == NOT_PROVEN) {
 			startPlayOut(board);
 		}
 
@@ -68,33 +72,62 @@ void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 
 		if (success) {
 			// play out
-			COUNT res = playOut(board, seq2);
+			COUNT res;
+			if (state == NOT_PROVEN) {
+				res = playOut(board, seq2);
+			} else {
+				// TODO hack
+				if (state == BLACK_WIN)
+					res = game->komi + 1.0;
+				else if (state == WHITE_WIN)
+					res = game->komi - 1.0;
+				else
+					res = game->komi;
+			}
 
 			// update the tree stat
 			upateStat(tree, treeLock, res, seq, seq2);
 		}
 
 	}
+
+
+	if (Util::SearchDebugEnabled()) {
+		fprintf(Util::LogFile(), "#simulation = %d success = %d\n", i, success ? 1 : 0);
+	}
 }
 
 bool UCTSearchRunner::searchInTree(UCTTree* tree, RWLock* treeLock,
-		GoBoard* board, vector<SgPoint>& seq) {
+		GoBoard* board, vector<SgPoint>& seq, BoardState& state) {
 	// TODO
-
+	poco_assert(state == NOT_PROVEN);
 	UCTNode* p = tree->rootNode();
 	bool deepen = true;
 	while (deepen) {
 		deepen = p->hasChildren();
-		bool success = tree->tryExpand(board, p);
+		BoardState state = NOT_PROVEN;
+		bool success = tree->tryExpand(board, p, game, state);
 		if (!success) {
 			return false;
 		}
-		p = selectChildrenUCT(tree, p);
+		if (state != NOT_PROVEN) {
+			p->state = state;
+			return true;
+		}
+		UCTNode* q = selectChildrenUCT(tree, p);
+		if (q == NULL) {
+			// the player wins
+			if (p->state == p->level)
+				state = p->state;
+			else
+				state = game->evaluateState(board);
+			return true;
+		}
+		p = q;
 		// XXX only for debug usage
 		poco_assert(p->move != SG_PASS && p->move != SG_NULLMOVE);
 		seq.push_back(p->move);
 		board->Play(p->move);
-		tree->update(p->move);
 	}
 	return true;
 }
@@ -303,14 +336,27 @@ UCTNode* UCTSearchRunner::selectChildrenUCT(UCTTree* tree, UCTNode* node) {
 
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
+		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
+			// the player will lose
+			if (m.state == m.level % 2)
+				continue;
+			// he wins
+			else {
+				node->state = (BoardState) (node->level % 2);
+				return &m;
+			}
+		}
 		double raveWeight = m.raveCount / (ravePara1 + ravePara2 * m.raveCount);
 		double moveWeight = m.visitCount;
 		double uct = CUCT * sqrt(log(node->visitCount) / (m.visitCount + 1));
-		double res = (raveWeight * m.raveValue + moveWeight * m.visitValue)
+		// TODO
+		double raveValue = blackMove ? m.raveValue : 2 - m.raveValue;
+		poco_assert(raveValue >= 0 && raveValue <= 2);
+		double visitValue = blackMove ? m.visitValue : 1 - m.visitValue;
+		double res = (raveWeight * raveValue + moveWeight * visitValue)
 				/ (raveWeight + moveWeight) + uct;
 
-		if (k == NULL || (blackMove && res > best)
-				|| (!blackMove && res < best)) {
+		if (k == NULL ||res > best) {
 			best = res;
 			k = &m;
 		}
@@ -326,6 +372,17 @@ UCTNode* UCTSearchRunner::selectChildrenCount(UCTTree* tree, UCTNode* node) {
 
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
+		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
+			// the player will lose
+			if (m.state == m.level % 2)
+				continue;
+			// he wins
+			else {
+				node->state = (BoardState) (node->level % 2);
+				return &m;
+			}
+
+		}
 		if (m.visitCount > best) {
 			best = m.visitCount;
 			k = &m;
@@ -342,9 +399,21 @@ UCTNode* UCTSearchRunner::selectChildrenMEAN(UCTTree* tree, UCTNode* node) {
 
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
-		if (k == NULL || (blackMove && m.visitValue > best) || (!blackMove
-				&& m.visitValue < best)) {
-			best = m.visitValue;
+		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
+			// the player will lose
+			if (m.state == m.level % 2)
+				continue;
+			// he wins
+			else {
+				node->state = (BoardState) (node->level % 2);
+				return &m;
+			}
+
+		}
+
+		double visitValue = blackMove ? m.visitValue : 1 - m.visitValue;
+		if (k == NULL || (visitValue > best)) {
+			best = visitValue;
 			k = &m;
 		}
 	}
@@ -359,9 +428,25 @@ UCTNode* UCTSearchRunner::selectChildrenRAVE(UCTTree* tree, UCTNode* node) {
 
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
+		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
+			// the player will lose
+			if (m.state == m.level % 2)
+				continue;
+			// he wins
+			else {
+				node->state = (BoardState) (node->level % 2);
+				return &m;
+			}
+
+		}
+		// TODO
+		double raveValue = blackMove ? m.raveValue : 2 - m.raveValue;
+		poco_assert(raveValue >= 0 && raveValue <= 2);
+		double visitValue = blackMove ? m.visitValue : 1 - m.visitValue;
+
 		double raveWeight = m.raveCount / (ravePara1 + ravePara2 * m.raveCount);
 		double moveWeight = m.visitCount;
-		double res = (raveWeight * m.raveValue + moveWeight * m.visitValue)
+		double res = (raveWeight * raveValue + moveWeight * visitValue)
 				/ (raveWeight + moveWeight);
 		if (k == NULL || (blackMove && res > best) || (blackMove && res < best)) {
 			best = res;

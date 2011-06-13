@@ -42,7 +42,7 @@ public:
 	int searchTime;
 
 	// komi
-	int komi;
+	double komi;
 
 	// parameters for the RAVE
 	double CInitial, CFinal;
@@ -77,12 +77,16 @@ public:
 
 	SgPoint genMoveUCT();
 
-
-	COUNT evaluate(GoUctBoard* board) {
+	template<typename BOARD>
+	COUNT evaluate(BOARD* board) {
 		int white = 0, black = 0;
 		bool marked[SG_MAXPOINT];
 		fill(marked, marked+SG_MAXPOINT, false);
-		for(GoUctBoard::Iterator it(*board); it; ++it) {
+
+		//if (Util::UctDebugEnabled()) {
+		//	board->printBoard(cerr);
+		//}
+		for(BOARD::Iterator it(*board); it; ++it) {
 			SgBoardColor c = board->GetColor(*it);
 			poco_assert(c != SG_BORDER);
 			if (c == SG_BLACK) black += 2;
@@ -124,14 +128,34 @@ public:
 			if (whiteNb) white += num;
 			if (!blackNb) white += num;
 		}
+		if (Util::UctDebugEnabled() && false) {
+			fprintf(Util::LogFile(), "simulation result: %.1f, black = %.1f, white = %.1f\n", (black - white) / 2.0, black / 2.0, white / 2.0);
+		}
 		return (black - white) / 2.0;
 	}
 
+	template<typename BOARD>
+	BoardState evaluateState(BOARD* board) {
+		COUNT res = evaluate(board);
+		if (res > komi) return BLACK_WIN;
+		else if (res < komi) return WHITE_WIN;
+		else return DRAW;
+	}
+
 	void testRun(int num, ostream& out) {
+		int k = 0;
 		for(int i=0; i<num; ++i) {
+			cerr << "i = " << i << endl;
 			SgPoint move = genMoveUCT();
+			if (move == SG_PASS) {
+				if (++k == 2) {
+					out << "Game ends in two passes\n";
+				}
+			}
+			else k = 0;
 			execute(move, i % 2 == 0 ? SG_BLACK : SG_WHITE);
 
+			out << "i = " << i << endl;
 			board.printBoard(out);
 		}
 	}

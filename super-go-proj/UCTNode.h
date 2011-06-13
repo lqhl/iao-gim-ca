@@ -25,25 +25,42 @@ public:
 
 	SgPoint move;
 
-	void clear();
+	BoardState state;
 
-	UCTNode();
+	void clear() {
+		this->raveCount = 0;
+		this->raveValue = 0.5;
+		this->visitCount = 0;
+		this->visitValue = 0.5;
+		this->level = UNUSED;
+		this->children.clear();
+		this->fullyExpanded = false;
+		state = NOT_PROVEN;
+	}
 
+	UCTNode() {
+		clear();
+	}
 	bool hasChildren() {
 		return !children.empty();
 	}
 
 	void updateVisit(VALUE value) {
+		VALUE t = visitValue * visitCount + value;
 		visitCount += 1;
-		visitValue += value;
+		visitValue = t / visitCount;
 	}
 
 	void updateRave(COUNT weight, VALUE value) {
+		//poco_assert(raveCount <= 50);
+		VALUE t = raveValue * raveCount + value * weight;
 		raveCount += weight;
-		raveValue += value;
+		raveValue = t / raveCount;
 	}
 
 	bool fullyExpanded;
+
+	void print(FILE* file);
 
 };
 #endif

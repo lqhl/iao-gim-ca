@@ -11,6 +11,7 @@
 #include "Poco/Util/Timer.h"
 #include "Poco/Random.h"
 #include <string>
+#include <cstdio>
 
 using std::string;
 using Poco::Util::PropertyFileConfiguration;
@@ -36,6 +37,45 @@ public:
 	static void init(const string& fileName);
 
 	static void close();
+
+	static Logger& getUctLogger() {
+		static Logger* logger = NULL;
+		if (logger == NULL) logger = &Logger::get("UctLogger");
+		return *logger;
+	}
+
+	static Logger& getTreeLogger() {
+		static Logger* logger = NULL;
+		if (logger == NULL) logger = &Logger::get("TreeLogger");
+		return *logger;
+	}
+
+
+	static Logger& getSearchLogger() {
+		static Logger* logger = NULL;
+		if (logger == NULL) logger = &Logger::get("SearchLogger");
+		return *logger;
+	}
+
+	static bool SearchDebugEnabled() {
+		static bool enabled = props->getBool("SearchDebug");
+		return enabled;
+	}
+
+	static bool TreeDebugEnabled() {
+		static bool enabled = props->getBool("TreeDebug");
+		return enabled;
+	}
+
+	static bool UctDebugEnabled() {
+		static bool enabled = props->getBool("UctDebug");
+		return enabled;
+	}
+
+	static FILE* LogFile() {
+		static FILE* file = fopen("super-go-log.txt", "w");
+		return file;
+	}
 
 };
 #endif

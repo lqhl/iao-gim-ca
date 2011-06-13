@@ -4,15 +4,20 @@
 #include "UCTTree.h"
 #include "UCTNode.h"
 #include "GoBoard.h"
+#include "Poco/Random.h"
 #include <vector>
 
 using std::vector;
+using Poco::Random;
 
 class SuperGoGame;
 
 class UCTTree {
 public:
 	UCTNode *node;
+
+	// tree will be accessed by one thread at a time, so we share a random generator
+	static Random rand;
 
 	int numNodes;
 
@@ -60,48 +65,23 @@ public:
 		return node;
 	}
 
-	bool tryExpand(GoBoard* board, UCTNode* node) {
-		if (node->fullyExpanded)
-			return true;
-		bool asChild[SG_MAXPOINT];
-		fill(asChild, asChild + SG_MAXPOINT, false);
-		vector<UCTNode*>& children = node->children;
-		for (vector<UCTNode*>::iterator it = children.begin(); it != children.end(); ++it) {
-			asChild[(*it)->move] = true;
-		}
-
-		children.reserve(board->Size() * board->Size() - node->level);
-
-		for (GoBoard::Iterator it(*board); it; ++it) {
-			if (!asChild[*it] && board->GetColor(*it) == SG_EMPTY
-				&& board->IsLegal(*it)) {
-					UCTNode* n = allocateNode();
-					if (n == NULL) return false;
-
-					n->level = node->level+1;
-					n->move = *it;
-					preprocess(board, n);
-					children.push_back(n);
-			}
-		}
-		node->fullyExpanded = true;
-		return true;
-	}
+	bool tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardState& state);
 
 	void preprocess(GoBoard* board, UCTNode* node) {
 		poco_assert(board->Size() == UctPatterns::BOARD_SIZE);
 		SgPoint p = node->move;
 
+		bool blackMove = board->ToPlay() == SG_BLACK;
 		if (UctPatterns::Line(p) == 3)
-			node->updateRave(6.67, 1.0);
+			node->updateRave(6.67, blackMove ? 1.0 : 0.0);
 		if (UctPatterns::Line(p) == 1)
-			node->updateRave(6.67, -1.0);
+			node->updateRave(6.67, blackMove ? 0.0 : 1.0);
 		if (UctPatterns::matchAny(board, p))
-			node->updateRave(5.0, 1.0);
+			node->updateRave(5.0, blackMove ? 1.0 : 0.0);
 		if (UctPatterns::match2BadKogeima(board, p))
-			node->updateRave(2.5, -1.0);
+			node->updateRave(2.5, blackMove ? 0.0 : 1.0);
 		if (UctPatterns::match2EmptyTriangle(board, p))
-			node->updateRave(5, -1.0);
+			node->updateRave(5, blackMove ? 0.0 : 1.0);
 
 	}
 };

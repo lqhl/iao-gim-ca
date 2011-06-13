@@ -1178,6 +1178,7 @@ inline bool GoBoard::IsFirst(SgPoint p) const
 
 inline bool GoBoard::IsLegal(int p, SgBlackWhite player) const
 {
+	poco_assert(!m_allowKoRepetition);
     SG_ASSERT_BW(player);
     if (IsPass(p))
         return true;
