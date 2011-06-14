@@ -393,8 +393,8 @@ gtp_print_vertices(int n, int movei[], int movej[])
       gtp_printf(" ");
     if (movei[k] == -1 && movej[k] == -1)
       gtp_printf("PASS");
-    else if (movei[k] < 0 || movei[k] >= gtp_boardsize
-	     || movej[k] < 0 || movej[k] >= gtp_boardsize)
+    else if (movei[k] <= 0 || movei[k] > gtp_boardsize
+	     || movej[k] <= 0 || movej[k] > gtp_boardsize)
       gtp_printf("??");
     else {
       if (vertex_transform_output_hook != NULL)
@@ -403,6 +403,8 @@ gtp_print_vertices(int n, int movei[], int movej[])
 	ri = movei[k];
 	rj = movej[k];
       }
+      fout << "I play " << char('A' + ri - 1) << rj << endl;
+	  fout.flush();
       gtp_printf("%c%d", 'A' + ri - 1, rj);
     }
   }

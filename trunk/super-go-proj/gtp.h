@@ -1,5 +1,11 @@
+#ifndef GTP_H
+#define GTP_H
+
 #include <stdarg.h>
 #include <stdio.h>
+#include <fstream>
+
+using namespace std;
 
 #define EMPTY        SG_EMPTY
 #define WHITE        SG_WHITE
@@ -22,6 +28,8 @@ typedef int (*gtp_fn_ptr)(char *s);
 
 /* Function pointer for vertex transform functions. */
 typedef void (*gtp_transform_ptr)(int ai, int aj, int *bi, int *bj);
+
+extern ofstream fout;
 
 /* Elements in the array of commands required by gtp_main_loop. */
 struct gtp_command {
@@ -47,9 +55,4 @@ int gtp_decode_move(char *s, int *color, int *i, int *j);
 void gtp_print_vertices(int n, int movei[], int movej[]);
 void gtp_print_vertex(int i, int j);
 
-/*
- * Local Variables:
- * tab-width: 8
- * c-basic-offset: 2
- * End:
- */
+#endif
