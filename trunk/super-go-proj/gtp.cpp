@@ -314,6 +314,7 @@ gtp_decode_coord(char *s, int *i, int *j)
   if (sscanf(s, " %c%d%n", &column, &row, &n) != 2)
     return 0;
   
+  if (tolower(column) >= 'i') column--;
   *i = tolower(column) - 'a' + 1;
   *j = row;
 
@@ -403,9 +404,12 @@ gtp_print_vertices(int n, int movei[], int movej[])
 	ri = movei[k];
 	rj = movej[k];
       }
-      fout << "I play " << char('A' + ri - 1) << rj << endl;
+	  char c = 'A' + ri - 1;
+	  if (c >= 'I')
+		  c++;
+      fout << "I play " << c << rj << endl;
 	  fout.flush();
-      gtp_printf("%c%d", 'A' + ri - 1, rj);
+      gtp_printf("%c%d", c, rj);
     }
   }
 }
