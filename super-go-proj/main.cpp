@@ -53,7 +53,6 @@ int main() {
 	SuperGoGame* game = new SuperGoGame();
 	game->init();
 	UCTTree::rand.seed(100);
-
 	ofstream out("super-go-test.txt");
 	game->testRun(1000, out);
 	*/

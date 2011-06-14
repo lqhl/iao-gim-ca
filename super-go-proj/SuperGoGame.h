@@ -151,6 +151,7 @@ public:
 				out << "PASS MOVE\n" << endl;
 				if (++k == 2) {
 					out << "Game ends in two passes\n";
+					break;
 				}
 			}
 			else k = 0;
