@@ -29,6 +29,8 @@ SuperGoGame::SuperGoGame() :
 
 	searchTime = timeLimit - 500;
 
+	book = NULL;
+
 }
 
 void SuperGoGame::setPlayer(int player) {
@@ -41,6 +43,8 @@ void SuperGoGame::execute(SgPoint move, SgBlackWhite color) {
 	board.Play(move, color);
 	tree->update(move);
 }
+
+static int numStep = 0;
 
 SgPoint SuperGoGame::genMoveUCT() {
 	if (numThread == 1) {
@@ -56,7 +60,6 @@ SgPoint SuperGoGame::genMoveUCT() {
 
 	UCTNode* next = workers[0]->selectChildrenMEAN(tree, tree->rootNode());
 	if (Util::SearchDebugEnabled()) {
-		static int i = 0;
 		UCTNode* n = tree->rootNode();
 		fprintf(Util::LogFile(), "children of root:\n");
 		for(vector<UCTNode*>::iterator it = n->children.begin(); it != n->children.end(); ++it) {
@@ -66,14 +69,14 @@ SgPoint SuperGoGame::genMoveUCT() {
 		}
 
 		if (next != NULL) {
-			fprintf(Util::LogFile(), "** CHOICE ** (i = %d) ", i);
+			fprintf(Util::LogFile(), "** CHOICE ** (i = %d) ", numStep);
 			next->print(Util::LogFile());
 			fprintf(Util::LogFile(), "\n");
 		}
 		else {
-			fprintf(Util::LogFile(), "** CHOICE ** (i = %d) PASS\n", i);
+			fprintf(Util::LogFile(), "** CHOICE ** (i = %d) PASS\n", numStep);
 		}
-		++i;
+		++numStep;
 
 		fflush(Util::LogFile());
 	}
@@ -81,8 +84,21 @@ SgPoint SuperGoGame::genMoveUCT() {
 	return next != NULL ? next->move : SG_PASS;
 }
 
+SgPoint SuperGoGame::genMove() {
+	if (book != NULL) {
+		SgPoint p = book->matchBook(board, board.ToPlay());
+		if (p != SG_NULLMOVE) return p;
+		fprintf(Util::LogFile(), "** BOOK ** (i = %d) (%d %d)\n", numStep, Row(p), Col(p));
+		++numStep;
+	}
+	book = NULL; // not useful anymore
+	return genMoveUCT();
+
+}
+
 
 void SuperGoGame::init() {
+	book = new GoBook();
 	for (int i = 0; i < numThread; ++i) {
 		workers.push_back(new UCTSearchRunner(this));
 	}
