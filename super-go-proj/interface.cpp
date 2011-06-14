@@ -32,6 +32,8 @@ static int gtp_final_score(char *s);
 static int gtp_final_status_list(char *s);
 static int gtp_showboard(char *s);
 
+ofstream fout("fuck.txt");
+
 /* List of known commands. */
 static struct gtp_command commands[] = {
 	{"protocol_version",		gtp_protocol_version},
@@ -157,7 +159,7 @@ gtp_boardsize(char *s)
 
 	// TODO
 
-	return gtp_failure("do not support");
+	return gtp_success("");
 }
 
 static int
@@ -239,6 +241,9 @@ gtp_genmove(char *s)
 		i = Col(move);
 		j = Row(move);
 	}
+
+	fout << i << ' ' << j << endl;
+	fout.flush();
 
 	gtp_start_response(GTP_SUCCESS);
 	gtp_mprintf("%m", i, j);
