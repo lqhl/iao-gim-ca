@@ -55,7 +55,7 @@ public:
 	static void init_board_const(int boardSize) {
 		for (int i = 1; i <= boardSize; ++i) {
 			for (int j = 1; j <= boardSize; ++j) {
-				SgPoint p = Pt(i, j);
+				SgPoint p = Pt(j, i);
 				int line1 = min(i, boardSize + 1 - i);
 				int line2 = min(j, boardSize + 1 - j);
 				line[p] = min(line1, line2);
