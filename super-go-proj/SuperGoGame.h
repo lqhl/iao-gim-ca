@@ -102,13 +102,13 @@ public:
 			marked[*it] = true;
 			stack[k++] = *it;
 
-			vector<SgPoint> nb;
+			SgArrayList<SgPoint, 4> nb;
 			while(k > 0) {
 				SgPoint cur = stack[--k];
-				nb.clear();
+				nb.Clear();
 				//nb.reserve(4);
 				getGoNeighbors(*board, *it, nb);
-				for(vector<SgPoint>::iterator j = nb.begin(); j != nb.end(); ++j) {
+				for(SgArrayList<SgPoint, 4>::Iterator j(nb); j; ++j) {
 					if (board->GetColor(*j) == SG_BLACK) blackNb = true;
 					else if (board->GetColor(*j) == SG_WHITE) whiteNb = true;
 					else {

@@ -24,37 +24,37 @@
  share only a sub-functionality. */
 namespace GoBoardUtil {
 template<typename BOARD>
-inline void getGoNeighbors(BOARD& board, SgPoint p, vector<SgPoint>& nb) {
+inline void getGoNeighbors(BOARD& board, SgPoint p, SgArrayList<SgPoint, 4>& nb) {
 	int r = Row(p), c = Col(p);
 	if (r > 1)
-		nb.push_back(p - SG_NS);
+		nb.PushBack(p - SG_NS);
 	if (r < board.Size())
-		nb.push_back(p + SG_NS);
+		nb.PushBack(p + SG_NS);
 	if (c > 1)
-		nb.push_back(p - SG_WE);
+		nb.PushBack(p - SG_WE);
 	if (c < board.Size())
-		nb.push_back(p + SG_WE);
+		nb.PushBack(p + SG_WE);
 }
 
 template<typename BOARD>
-inline void getGo8Neighbors(BOARD& board, SgPoint p, vector<SgPoint>& nb) {
+inline void getGo8Neighbors(BOARD& board, SgPoint p, SgArrayList<SgPoint, 8>& nb) {
 	int r = Row(p), c = Col(p);
 	if (r > 1)
-		nb.push_back(p - SG_NS);
+		nb.PushBack(p - SG_NS);
 	if (r < board.Size())
-		nb.push_back(p + SG_NS);
+		nb.PushBack(p + SG_NS);
 	if (c > 1)
-		nb.push_back(p - SG_WE);
+		nb.PushBack(p - SG_WE);
 	if (c < board.Size())
-		nb.push_back(p + SG_WE);
+		nb.PushBack(p + SG_WE);
 	if (r > 1 && c > 1)
-		nb.push_back(p - SG_NS - SG_WE);
+		nb.PushBack(p - SG_NS - SG_WE);
 	if (r > 1 && c < board.Size())
-		nb.push_back(p - SG_NS + SG_WE);
+		nb.PushBack(p - SG_NS + SG_WE);
 	if (r < board.Size() && c > 1)
-		nb.push_back(p + SG_NS - SG_WE);
+		nb.PushBack(p + SG_NS - SG_WE);
 	if (r < board.Size() && c < board.Size())
-		nb.push_back(p + SG_NS + SG_WE);
+		nb.PushBack(p + SG_NS + SG_WE);
 }
 
 /** Add anchors of neighbor blocks to list. */

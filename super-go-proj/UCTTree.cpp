@@ -2,11 +2,13 @@
 #include "Poco/Hashmap.h"
 #include "SuperGoGame.h"
 #include "GoBoard.h"
+#include "GoBoardUtil.h"
 #include "util/util.h"
 #include <assert.h>
 
 #undef max
 using Poco::HashMap;
+using GoBoardUtil::getGoNeighbors;
 
 Random UCTTree::rand;
 
@@ -127,6 +129,68 @@ void UCTTree::update(SgPoint move) {
 	root = next - node;
 }
 
+inline bool IsSimpleEye(const GoBoard& bd, SgPoint p,
+                                   SgBlackWhite c)
+{
+    // Function is inline despite its large size, because it returns quickly
+    // on average, which makes the function call an overhead
+
+    SgBlackWhite opp = SgOppBW(c);
+    if (bd.HasEmptyNeighbors(p) || bd.HasNeighbors(p, opp))
+        return false;
+    SgArrayList<SgPoint,2> anchors;
+
+    SgArrayList<SgPoint, 4> nb_p;
+    getGoNeighbors(bd, p, nb_p);
+    for (SgArrayList<SgPoint, 4>::Iterator it(nb_p); it; ++it)
+    {
+        SgPoint nbPoint = *it;
+        if (bd.IsBorder(nbPoint))
+            continue;
+        poco_assert(bd.GetColor(nbPoint) == c);
+        SgPoint nbAnchor = bd.Anchor(nbPoint);
+        if (! anchors.Contains(nbAnchor))
+        {
+            if (anchors.Length() > 1)
+                return false;
+            anchors.PushBack(nbAnchor);
+        }
+    }
+    if (anchors.Length() == 1)
+        return true;
+    for (GoBoard::LibertyIterator it(bd, anchors[0]); it; ++it)
+    {
+        SgPoint lib = *it;
+        if (lib == p)
+            continue;
+        bool isSecondSharedEye = true;
+        SgArrayList<SgPoint,2> foundAnchors;
+        SgArrayList<SgPoint, 4> nb_lib;
+        getGoNeighbors(bd, p, nb_lib);
+        for (SgArrayList<SgPoint, 4>::Iterator it2(nb_lib); it2; ++it2)
+        {
+            SgPoint nbPoint = *it2;
+            if (bd.IsBorder(nbPoint))
+                continue;
+            if (bd.GetColor(nbPoint) != c)
+            {
+                isSecondSharedEye = false;
+                break;
+            }
+            SgPoint nbAnchor = bd.Anchor(nbPoint);
+            if (! anchors.Contains(nbAnchor))
+            {
+                isSecondSharedEye = false;
+                break;
+            }
+            if (! foundAnchors.Contains(nbAnchor))
+                foundAnchors.PushBack(nbAnchor);
+        }
+        if (isSecondSharedEye && foundAnchors.Length() == 2)
+            return true;
+    }
+    return false;
+}
 
 bool UCTTree::tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardState& state) {
 	if (node->fullyExpanded) {
@@ -136,6 +200,8 @@ bool UCTTree::tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardS
 		}
 		return true;
 	}
+
+	SgBlackWhite toPlay = node->level % 2 == 0 ? SG_BLACK : SG_WHITE;
 	bool asChild[SG_MAXPOINT];
 	fill(asChild, asChild + SG_MAXPOINT, false);
 	vector<UCTNode*>& children = node->children;
@@ -149,7 +215,7 @@ bool UCTTree::tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardS
 
 	for (GoBoard::Iterator it(*board); it; ++it) {
 		if (!asChild[*it] && board->GetColor(*it) == SG_EMPTY
-			&& board->IsLegal(*it)) {
+			&& board->IsLegal(*it) && !IsSimpleEye(*board, *it, toPlay)) {
 				UCTNode* n = allocateNode();
 				if (n == NULL) return false;
 
