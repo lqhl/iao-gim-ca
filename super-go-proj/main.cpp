@@ -41,9 +41,9 @@ void testGoUctBoard() {
 }
 
 int main() {
-	return pk_main();
+	// return pk_main();
 
-	/*
+	
 	// !!! IMPORTANT
 	remove("super-go-log.txt");
 	Util::init("super-go.config");
@@ -55,7 +55,7 @@ int main() {
 	UCTTree::rand.seed(100);
 	ofstream out("super-go-test.txt");
 	game->testRun(1000, out);
-	*/
+	
 
 
 //	testHashTable();

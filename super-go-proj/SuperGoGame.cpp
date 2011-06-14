@@ -87,9 +87,11 @@ SgPoint SuperGoGame::genMoveUCT() {
 SgPoint SuperGoGame::genMove() {
 	if (book != NULL) {
 		SgPoint p = book->matchBook(board, board.ToPlay());
-		if (p != SG_NULLMOVE) return p;
-		fprintf(Util::LogFile(), "** BOOK ** (i = %d) (%d %d)\n", numStep, Row(p), Col(p));
-		++numStep;
+		if (p != SG_NULLMOVE) {
+			fprintf(Util::LogFile(), "** BOOK ** (i = %d) (%d %d)\n", numStep, Row(p), Col(p));
+			++numStep;
+			return p;
+		}
 	}
 	book = NULL; // not useful anymore
 	return genMoveUCT();

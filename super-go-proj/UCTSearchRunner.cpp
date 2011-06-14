@@ -334,8 +334,10 @@ UCTNode* UCTSearchRunner::selectChildrenUCT(UCTTree* tree, UCTNode* node) {
 	vector<UCTNode*>& v = node->children;
 	bool blackMove = node->level % 2 == 0;
 
+	GoBoard& board = game->board;
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
+		if (!board.IsEmpty(m.move)) continue;
 		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
 			// the player will lose
 			if (m.state == m.level % 2)
@@ -370,8 +372,10 @@ UCTNode* UCTSearchRunner::selectChildrenCount(UCTTree* tree, UCTNode* node) {
 	vector<UCTNode*>& v = node->children;
 	bool blackMove = node->level % 2 == 0;
 
+	GoBoard& board = game->board;
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
+		if (!board.IsEmpty(m.move)) continue;
 		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
 			// the player will lose
 			if (m.state == m.level % 2)
@@ -397,8 +401,10 @@ UCTNode* UCTSearchRunner::selectChildrenMEAN(UCTTree* tree, UCTNode* node) {
 	vector<UCTNode*>& v = node->children;
 	bool blackMove = node->level % 2 == 0;
 
+	GoBoard& board = game->board;
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
+		if (!board.IsEmpty(m.move)) continue;
 		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
 			// the player will lose
 			if (m.state == m.level % 2)
@@ -426,8 +432,11 @@ UCTNode* UCTSearchRunner::selectChildrenRAVE(UCTTree* tree, UCTNode* node) {
 	vector<UCTNode*>& v = node->children;
 	bool blackMove = node->level % 2 == 0;
 
+	GoBoard& board = game->board;
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
+		if (!board.IsEmpty(m.move)) continue;
+
 		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
 			// the player will lose
 			if (m.state == m.level % 2)
