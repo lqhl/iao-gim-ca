@@ -66,7 +66,7 @@ SgPoint SuperGoGame::genMoveUCT() {
 		}
 
 		if (next != NULL) {
-			fprintf(Util::LogFile(), "** CHOICE ** (i = %d)", i);
+			fprintf(Util::LogFile(), "** CHOICE ** (i = %d) ", i);
 			next->print(Util::LogFile());
 			fprintf(Util::LogFile(), "\n");
 		}
