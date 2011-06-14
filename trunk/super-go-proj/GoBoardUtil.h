@@ -6,6 +6,8 @@
 #ifndef GO_BOARDUTIL_H
 #define GO_BOARDUTIL_H
 
+#undef max
+
 #include "Poco/Debugger.h"
 #include "GoBoard.h"
 #include "GoUctBoard.h"

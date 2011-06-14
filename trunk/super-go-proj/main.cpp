@@ -8,6 +8,7 @@
 #include "util/util.h"
 #include "testHashTable.h"
 #include "SuperGoGame.h"
+#include "SuperGo.h"
 #include <cstdio>
 
 using namespace std;
@@ -40,6 +41,9 @@ void testGoUctBoard() {
 }
 
 int main() {
+	return pk_main();
+
+	/*
 	// !!! IMPORTANT
 	remove("super-go-log.txt");
 	Util::init("super-go.config");
@@ -52,6 +56,7 @@ int main() {
 
 	ofstream out("super-go-test.txt");
 	game->testRun(1000, out);
+	*/
 
 
 //	testHashTable();
@@ -63,5 +68,4 @@ int main() {
 	//testMCSimulation2();
 
 	//UctPatterns::test();
-	return 0;
 }
