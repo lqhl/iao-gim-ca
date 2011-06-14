@@ -1,3 +1,6 @@
+#ifndef TESTHASHTABLE_H
+#define TESTHASHTABLE_H
+
 #include "Poco/HashMap.h"
 
 using Poco::HashMap;
@@ -44,3 +47,5 @@ void testVector() {
 		v.clear();
 	}
 }
+
+#endif // GO_BOARD_H
