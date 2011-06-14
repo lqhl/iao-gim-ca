@@ -5,45 +5,12 @@
 #include "SgMove.h"
 #include <fstream>
 #include <string>
-
+#include <vector>
 
 using namespace std;
 
-string convert(int num) {
-	string ret;
-	int temp = num;
-	if(temp < 10) {
-		char tmp[2];
-		tmp[0] = (temp + '0');
-		tmp[1] = '\0';
-		ret = tmp;
-	}
-	else {
-		char tmp[3];
-		tmp[0] = '1';
-		tmp[1] = ((temp % 10) + '0');
-		tmp[2] = '\0';
-		ret = tmp;
-	}
-	return ret;
-}
-
-string convert(char ch) {
-	string ret;
-	char temp[2];
-	temp[0] = ch;
-	temp[1] = '\0';
-	ret = temp;
-	return ret;
-}
-
-SgPoint point(string move) {
-	int row = 0;
+SgPoint point(int pos, char ch) {
 	int col = 0;
-	char ch = move[0];
-	for(int i = 1; i < move.size(); ++i) {
-		row = row * 10 + (move[i] - '0');
-	}
 	switch(ch) {
 		case 'A':
 			col = 1;
@@ -85,16 +52,14 @@ SgPoint point(string move) {
 			col = 13;
 			break;
 	}
-	return SgPointUtil::Pt(col, row);
+	return SgPointUtil::Pt(col, pos);
 }
 
 GoBook::GoBook() {
 	ifstream fin("book.dat");
 	string str;
 	int size = 0;
-	string parse;
-	string move;
-	int i = 0;
+	GoBook::capacity = 0;
 	while(!fin.eof()) {
 		fin >> str;
 		// 1. This is a size number.
@@ -157,14 +122,13 @@ GoBook::GoBook() {
 						default:
 							break;
 					}
-					if(!parse.empty()) parse += " ";
-					parse = parse + convert(ch) + convert(pos);
+					SgPoint pt = point(pos, ch);
+					patterns[GoBook::capacity].push_back(pt);
 				}
 			}
 			else {
 				// 3. This is a delimiter followed by a move.
 				if(str[0] == '|' && str.size() == 1) {
-					++i;
 					string res;
 					fin >> res;
 					int pos = 0;
@@ -213,53 +177,61 @@ GoBook::GoBook() {
 								ch = ch - 6;
 								break;
 						}
-						move = convert(ch) + convert(pos);
-						//cerr << move << endl;
-						//cerr << parse << endl;
-						patterns.push_back(parse);
-						moves.push_back(move);
-						parse.clear();
+						SgPoint strategy = point(pos, ch);
+						++GoBook::capacity;
 					}
 				}
-				else cerr << "Load error!" << endl;
+				else cout << "Load error!" << endl;
 			}
 		}
 	}
 	fin.close();
 
-	cerr << patterns.size() << endl;
+	cerr << GoBook::capacity << endl;
 	cerr << moves.size() << endl;
 }
 
 
 SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
-	string tmp;
+	int cnt =  0;
 	for(int i = 1; i < 13; ++i) {
 		for(int j = 1; j < 13; ++j) {
-			SgPoint p = SgPointUtil::Pt(i, j);
-			if(board.GetColor(p) == color) {
-				if(!tmp.empty())
-					tmp += " ";
-				tmp += SgPointUtil::PointToString(p);
-			}
+			SgPoint pt = SgPointUtil::Pt(i, j);
+			if(board.GetColor(pt) == SG_BLACK || board.GetColor(pt) == SG_WHITE)
+				++cnt;
 		}
 	}
 
-	string result;
-	for(int i = 0; i < patterns.size(); ++i) {
-		if(patterns[i].rfind(tmp, 0) != string::npos || (patterns[i].empty() && tmp.empty())) {
-			result = moves[i];
+
+	for(int i = 0; i < GoBook::capacity; ++i) {
+		if(GoBook::patterns[i].size() != cnt)
+			continue;
+
+		bool success = true;
+		for(int j = 0; j < GoBook::patterns[i].size(); ++j) {
+			if(j % 2 == 0 && board.GetColor(patterns[i][j]) == SG_BLACK) {
+			
+			}
+			else {
+				success = false;
+				break;
+			}
+			if(j % 2 == 1 && board.GetColor(patterns[i][j]) == SG_WHITE) {
+			
+			}
+			else {
+				success = false;
+				break;
+			}
 		}
+		if(success) return moves[i];
 	}
-	if(result.empty())
-		return SG_NULLMOVE;
-	return point(result);
+	return SG_NULLMOVE;
 }
 
 
 
 
 GoBook::~GoBook() {
-	patterns.clear();
 	moves.clear();
 }
