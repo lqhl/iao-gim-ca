@@ -436,18 +436,14 @@ public:
 		int nb[3];
 		fill(nb, nb + 3, 0);
 
-		vector<SgPoint> neighbors;
-		neighbors.reserve(8);
+		SgArrayList<SgPoint, 8> neighbors;
 		getGo8Neighbors(*board, p, neighbors);
 		SgPoint x;
-		for (vector<SgPoint>::iterator it = neighbors.begin(); it
-				!= neighbors.end(); ++it) {
+		for (SgArrayList<SgPoint, 8>::Iterator it(neighbors); it; ++it) {
 			++nb[board->GetColor(*it)];
 			if (board->GetColor(*it) == opponent)
 				x = *it;
 		}
-
-
 
 		if (!(nb[me] == 0 && nb[opponent] == 1))
 			return false;
@@ -458,16 +454,15 @@ public:
 			if (col > 2 && board->GetColor(x - SG_WE) == SG_EMPTY
 					&& board->GetColor(x - SG_WE - SG_WE) == me)
 				return true;
-			if (col + 1 < BOARD_SIZE && board->GetColor(x + SG_WE)
-					== SG_EMPTY && board->GetColor(x + SG_WE + SG_WE) == me)
+			if (col + 1 < BOARD_SIZE && board->GetColor(x + SG_WE) == SG_EMPTY
+					&& board->GetColor(x + SG_WE + SG_WE) == me)
 				return true;
-		}
-		else if (x - p == SG_WE || x - p == -SG_WE) {
+		} else if (x - p == SG_WE || x - p == -SG_WE) {
 			if (row > 2 && board->GetColor(x - SG_NS) == SG_EMPTY
 					&& board->GetColor(x - SG_NS - SG_NS) == me)
 				return true;
-			if (row + 1 < BOARD_SIZE && board->GetColor(x + SG_NS)
-					== SG_EMPTY && board->GetColor(x + SG_NS + SG_NS) == me)
+			if (row + 1 < BOARD_SIZE && board->GetColor(x + SG_NS) == SG_EMPTY
+					&& board->GetColor(x + SG_NS + SG_NS) == me)
 				return true;
 		}
 
@@ -478,48 +473,51 @@ public:
 		SgBlackWhite me = board->ToPlay(), opponent = 1 - me;
 		int row = Row(p), col = Col(p);
 
-
 		if (row > 1 && col > 1) {
 			int nb[3];
-			fill(nb, nb+3, 0);
+			fill(nb, nb + 3, 0);
 			++nb[board->GetColor(p)];
 			++nb[board->GetColor(p - SG_NS)];
 			++nb[board->GetColor(p - SG_WE)];
 			++nb[board->GetColor(p - SG_NS - SG_WE)];
-			if (nb[me] == 3 && nb[SG_EMPTY] == 1) return true;
+			if (nb[me] == 3 && nb[SG_EMPTY] == 1)
+				return true;
 
 		}
 
 		if (row > 1 && col < BOARD_SIZE) {
 			int nb[3];
-			fill(nb, nb+3, 0);
+			fill(nb, nb + 3, 0);
 			++nb[board->GetColor(p)];
 			++nb[board->GetColor(p - SG_NS)];
 			++nb[board->GetColor(p + SG_WE)];
 			++nb[board->GetColor(p - SG_NS + SG_WE)];
-			if (nb[me] == 3 && nb[SG_EMPTY] == 1) return true;
+			if (nb[me] == 3 && nb[SG_EMPTY] == 1)
+				return true;
 
 		}
 
 		if (row < BOARD_SIZE && col > 1) {
 			int nb[3];
-			fill(nb, nb+3, 0);
+			fill(nb, nb + 3, 0);
 			++nb[board->GetColor(p)];
 			++nb[board->GetColor(p + SG_NS)];
 			++nb[board->GetColor(p - SG_WE)];
 			++nb[board->GetColor(p + SG_NS - SG_WE)];
-			if (nb[me] == 3 && nb[SG_EMPTY] == 1) return true;
+			if (nb[me] == 3 && nb[SG_EMPTY] == 1)
+				return true;
 
 		}
 
 		if (row < BOARD_SIZE && col < BOARD_SIZE) {
 			int nb[3];
-			fill(nb, nb+3, 0);
+			fill(nb, nb + 3, 0);
 			++nb[board->GetColor(p)];
 			++nb[board->GetColor(p + SG_NS)];
 			++nb[board->GetColor(p + SG_WE)];
 			++nb[board->GetColor(p + SG_NS + SG_WE)];
-			if (nb[me] == 3 && nb[SG_EMPTY] == 1) return true;
+			if (nb[me] == 3 && nb[SG_EMPTY] == 1)
+				return true;
 
 		}
 
