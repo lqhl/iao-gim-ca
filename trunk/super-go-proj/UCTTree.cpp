@@ -5,6 +5,7 @@
 #include "util/util.h"
 #include <assert.h>
 
+#undef max
 using Poco::HashMap;
 
 Random UCTTree::rand;
@@ -49,18 +50,22 @@ void UCTTree::deleteSubtree(UCTNode* n) {
 void UCTTree::updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT result) {
 	// TODO assert the color
 
-	HashMap<int, int> moveDepth(game->BOARD_SIZE * game->BOARD_SIZE * 2);
+	int MAX_DEPTH = numeric_limits<int>::max();
+	int moveDepth[2][SG_MAXPOINT];
+	fill(moveDepth[0], moveDepth[0] + SG_MAXPOINT, MAX_DEPTH);
+	fill(moveDepth[1], moveDepth[1] + SG_MAXPOINT, MAX_DEPTH);
+
+	int rootLevel = rootNode()->level;
 	int k = 1;
 	vector<SgPoint>::iterator it;
 	for(it = seqIn.begin(); it != seqIn.end(); ++it) {
-		if (moveDepth.find(*it) == moveDepth.end()) {
-			moveDepth.insert(HashMap<int, int>::PairType(*it, k));
-		}
 		++k;
 	}
 	for(it = seqOut.begin(); it != seqOut.end(); ++it) {
-		if (moveDepth.find(*it) == moveDepth.end()) {
-			moveDepth.insert(HashMap<int, int>::PairType(*it, k));
+		int player = 1 - (rootLevel + k) % 2;
+
+		if (moveDepth[player][*it] == MAX_DEPTH) {
+			moveDepth[player][*it] = k;
 		}
 		++k;
 	}
@@ -86,9 +91,9 @@ void UCTTree::updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT 
 				c.updateVisit(delta);
 			}
 			else {
-				HashMap<int, int>::Iterator d = moveDepth.find(c.move);
-				if (d != moveDepth.end())
-					c.updateRave(2 - (double)(d->second) / k, delta);
+				int d = moveDepth[p->level % 2][c.move];
+				if (d != MAX_DEPTH)
+					c.updateRave(1 - (double)(d) / k, delta);
 			}
 		}
 		poco_assert(next != NULL);
@@ -112,8 +117,8 @@ void UCTTree::update(SgPoint move) {
 		deleteSubtree(*it);
 	}
 
+	// A PASS MOVE, maybe
 	if (next == NULL) {
-		poco_assert(n->level % 2 != game->player);
 		next = allocateNode();
 		next->level = n->level + 1;
 	}
@@ -138,7 +143,9 @@ bool UCTTree::tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardS
 		asChild[(*it)->move] = true;
 	}
 
-	children.reserve(board->Size() * board->Size() - node->level);
+	int total = board->Size() * board->Size();
+	if (node->level < total)
+		children.reserve(total - node->level + 10);
 
 	for (GoBoard::Iterator it(*board); it; ++it) {
 		if (!asChild[*it] && board->GetColor(*it) == SG_EMPTY

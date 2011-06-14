@@ -350,8 +350,8 @@ UCTNode* UCTSearchRunner::selectChildrenUCT(UCTTree* tree, UCTNode* node) {
 		double moveWeight = m.visitCount;
 		double uct = CUCT * sqrt(log(node->visitCount) / (m.visitCount + 1));
 		// TODO
-		double raveValue = blackMove ? m.raveValue : 2 - m.raveValue;
-		poco_assert(raveValue >= 0 && raveValue <= 2);
+		double raveValue = blackMove ? m.raveValue : 1 - m.raveValue;
+		poco_assert(raveValue >= 0 && raveValue <= 1);
 		double visitValue = blackMove ? m.visitValue : 1 - m.visitValue;
 		double res = (raveWeight * raveValue + moveWeight * visitValue)
 				/ (raveWeight + moveWeight) + uct;
@@ -440,8 +440,8 @@ UCTNode* UCTSearchRunner::selectChildrenRAVE(UCTTree* tree, UCTNode* node) {
 
 		}
 		// TODO
-		double raveValue = blackMove ? m.raveValue : 2 - m.raveValue;
-		poco_assert(raveValue >= 0 && raveValue <= 2);
+		double raveValue = blackMove ? m.raveValue : 1 - m.raveValue;
+		poco_assert(raveValue >= 0 && raveValue <= 1);
 		double visitValue = blackMove ? m.visitValue : 1 - m.visitValue;
 
 		double raveWeight = m.raveCount / (ravePara1 + ravePara2 * m.raveCount);

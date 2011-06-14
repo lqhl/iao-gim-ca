@@ -51,7 +51,7 @@ int main() {
 	UCTTree::rand.seed(100);
 
 	ofstream out("super-go-test.txt");
-	game->testRun(20, out);
+	game->testRun(1000, out);
 
 
 //	testHashTable();
