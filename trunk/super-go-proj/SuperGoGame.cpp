@@ -56,6 +56,7 @@ SgPoint SuperGoGame::genMoveUCT() {
 
 	UCTNode* next = workers[0]->selectChildrenMEAN(tree, tree->rootNode());
 	if (Util::SearchDebugEnabled()) {
+		static int i = 0;
 		UCTNode* n = tree->rootNode();
 		fprintf(Util::LogFile(), "children of root:\n");
 		for(vector<UCTNode*>::iterator it = n->children.begin(); it != n->children.end(); ++it) {
@@ -65,13 +66,14 @@ SgPoint SuperGoGame::genMoveUCT() {
 		}
 
 		if (next != NULL) {
-			fprintf(Util::LogFile(), "** CHOICE ** ");
+			fprintf(Util::LogFile(), "** CHOICE ** (i = %d)", i);
 			next->print(Util::LogFile());
 			fprintf(Util::LogFile(), "\n");
 		}
 		else {
-			fprintf(Util::LogFile(), "** CHOICE ** PASS\n");
+			fprintf(Util::LogFile(), "** CHOICE ** (i = %d) PASS\n", i);
 		}
+		++i;
 
 		fflush(Util::LogFile());
 	}
