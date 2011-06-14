@@ -62,25 +62,30 @@ pk_main()
 	/* Make sure that stdout is not block buffered. */
 	setbuf(stdout, NULL);
 
+	/* Process GTP commands. */
+	FILE* outFile = fopen("commands.txt", "w");
+
 	/* Inform the GTP utility functions about the initial board size. */
 	gtp_internal_set_boardsize(SuperGoGame::BOARD_SIZE);
 
-	// !!! IMPORTANT
-	remove("super-go-log.txt");
-	Util::init("super-go.config");
-	UctPatterns::init();
-
-	game = new SuperGoGame();
-	game->init();
-	UCTTree::rand.seed(100);
-
-	ofstream out("super-go-test.txt");
-
-	/* Process GTP commands. */
-	gtp_main_loop(commands, stdin, NULL);
-
+	gtp_main_loop(commands, stdin, outFile);
 
 	return 0;
+}
+
+bool isInit = false;
+
+void init() {
+	if (!isInit) {
+		isInit = true;
+		remove("super-go-log.txt");
+		Util::init("super-go.config");
+		UctPatterns::init();
+
+		game = new SuperGoGame();
+		game->init();
+		UCTTree::rand.seed(100);
+	}
 }
 
 /* We are talking version 2 of the protocol. */
@@ -200,6 +205,7 @@ gtp_set_free_handicap(char *s)
 static int
 gtp_play(char *s)
 {
+	init();
 	int i, j;
 	int color = EMPTY;
 
@@ -210,12 +216,13 @@ gtp_play(char *s)
 		game->execute(SG_PASS, color);
 	else
 		game->execute(SgPointUtil::Pt(i, j), color);
-	return gtp_success("");
+	return gtp_success("2");
 }
 
 static int
 gtp_genmove(char *s)
 {
+	init();
 	int i, j;
 	int color = EMPTY;
 
@@ -225,8 +232,13 @@ gtp_genmove(char *s)
 	SgPoint move = game->genMoveUCT();
 	game->execute(move, color);
 
-	i = Row(move);
-	j = Col(move);
+	if (move == SG_PASS) {
+		i = j = -1;
+	}
+	else {
+		i = Col(move);
+		j = Row(move);
+	}
 
 	gtp_start_response(GTP_SUCCESS);
 	gtp_mprintf("%m", i, j);

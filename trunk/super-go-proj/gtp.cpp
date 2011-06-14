@@ -2,9 +2,12 @@
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
+#include <iostream>
 
 #include "SgBlackWhite.h"
 #include "SgBoardColor.h"
+
+using namespace std;
 
 #include "gtp.h"
 
@@ -42,8 +45,12 @@ gtp_main_loop(struct gtp_command commands[], FILE *gtp_input,
     if (!fgets(line, GTP_BUFSIZE, gtp_input))
       break; /* EOF or some error */
 
-    if (gtp_dump_commands)
+    cerr << line << endl;
+
+    if (gtp_dump_commands) {
       fputs(line, gtp_dump_commands);
+      fflush(gtp_dump_commands);
+    }
     
     /* Preprocess the line. */
     for (i = 0, p = line; line[i]; i++) {
@@ -307,19 +314,8 @@ gtp_decode_coord(char *s, int *i, int *j)
   if (sscanf(s, " %c%d%n", &column, &row, &n) != 2)
     return 0;
   
-  if (tolower((int) column) == 'i')
-    return 0;
-  *j = tolower((int) column) - 'a';
-  if (tolower((int) column) > 'i')
-    --*j;
-
-  *i = gtp_boardsize - row;
-
-  if (*i < 0 || *i >= gtp_boardsize || *j < 0 || *j >= gtp_boardsize)
-    return 0;
-
-  if (vertex_transform_input_hook != NULL)
-    (*vertex_transform_input_hook)(*i, *j, i, j);
+  *i = tolower(column) - 'a' + 1;
+  *j = row;
 
   return n;
 }
@@ -407,7 +403,7 @@ gtp_print_vertices(int n, int movei[], int movej[])
 	ri = movei[k];
 	rj = movej[k];
       }
-      gtp_printf("%c%d", 'A' + rj + (rj >= 8), gtp_boardsize - ri);
+      gtp_printf("%c%d", 'A' + ri - 1, rj);
     }
   }
 }
