@@ -7,6 +7,7 @@
 #include "UCTTree.h"
 #include "Poco/RWLock.h"
 #include "GoBoardUtil.h"
+#include "GoBook.h"
 #include <vector>
 #include <string>
 
@@ -53,13 +54,14 @@ public:
 	// first play urgency
 	double firstPlayValue;
 
-	GenMoveFunc genMove;
 
 	vector<UCTSearchRunner*> workers;
 
 	RWLock* treeLock;
 
 	UCTTree* tree;
+
+	GoBook* book;
 
 	int player, opponent;
 
@@ -75,6 +77,7 @@ public:
 
 	// given a move, generate a new move
 
+	SgPoint genMove();
 	SgPoint genMoveUCT();
 
 	template<typename BOARD>
@@ -146,7 +149,7 @@ public:
 		int k = 0;
 		for(int i=0; i<num; ++i) {
 			cerr << "i = " << i << endl;
-			SgPoint move = genMoveUCT();
+			SgPoint move = genMove();
 			if (move == SG_PASS) {
 				out << "PASS MOVE\n" << endl;
 				if (++k == 2) {

@@ -94,6 +94,7 @@ GoBook::GoBook() {
 	int size = 0;
 	string parse;
 	string move;
+	int i = 0;
 	while(!fin.eof()) {
 		fin >> str;
 		// 1. This is a size number.
@@ -163,6 +164,7 @@ GoBook::GoBook() {
 			else {
 				// 3. This is a delimiter followed by a move.
 				if(str[0] == '|' && str.size() == 1) {
+					++i;
 					string res;
 					fin >> res;
 					int pos = 0;
@@ -212,20 +214,21 @@ GoBook::GoBook() {
 								break;
 						}
 						move = convert(ch) + convert(pos);
-
+						//cerr << move << endl;
+						//cerr << parse << endl;
 						patterns.push_back(parse);
 						moves.push_back(move);
 						parse.clear();
 					}
 				}
-				else cout << "Load error!" << endl;
+				else cerr << "Load error!" << endl;
 			}
 		}
 	}
 	fin.close();
 
-	cout << patterns.size() << endl;
-	cout << moves.size() << endl;
+	cerr << patterns.size() << endl;
+	cerr << moves.size() << endl;
 }
 
 
@@ -241,9 +244,10 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 			}
 		}
 	}
+
 	string result;
 	for(int i = 0; i < patterns.size(); ++i) {
-		if(patterns[i].rfind(tmp, 0) != string::npos) {
+		if(patterns[i].rfind(tmp, 0) != string::npos || (patterns[i].empty() && tmp.empty())) {
 			result = moves[i];
 		}
 	}
