@@ -17,8 +17,9 @@ public:
 	~GoBook();
 
 private:
-	vector<string> patterns;
-	vector<string> moves;
+	vector<SgPoint> patterns[5000];
+	vector<SgPoint> moves;
+	int capacity;
 
 };
 
