@@ -182,7 +182,7 @@ GoBook::GoBook() {
 						++GoBook::capacity;
 					}
 				}
-				else cout << "Load error!" << endl;
+				else cerr << "Load error!" << endl;
 			}
 		}
 	}
@@ -211,7 +211,6 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 
 		bool success = true;
 		for(int j = 0; j < GoBook::patterns[i].size(); ++j) {
-			//cerr << i << " " << SgPointUtil::Col(patterns[i][j]) << " " << SgPointUtil::Row(patterns[i][j])<< endl;
 			if(j % 2 == 0) {
 				if(board.GetColor(patterns[i][j]) == SG_BLACK) {
 				}
@@ -221,7 +220,8 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 				}
 			}
 			if(j % 2 == 1) {
-				if(board.GetColor(patterns[i][j]) == SG_WHITE) {}
+				if(board.GetColor(patterns[i][j]) == SG_WHITE) {
+				}
 				else {
 					success = false;
 					break;
@@ -229,9 +229,11 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 			}
 		}
 		if(success) {
-			//cerr << "Success " << SgPointUtil::Row(moves[i]) << " " << SgPointUtil::Col(moves[i]) << endl;
-			if(board.IsEmpty(moves[i]))
+			if(!board.IsEmpty(moves[i])) {
+				cerr << "Success" << endl;
+				cerr << SgPointUtil::Row(moves[i]) << " " << SgPointUtil::Col(moves[i]) << endl;
 				return moves[i];
+			}	
 		}
 	}
 	return SG_NULLMOVE;
