@@ -75,13 +75,14 @@ void UCTTree::updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT 
 	}
 
 
-	COUNT delta = 0.5;
+	VALUE delta = 0.5;
 	if (result > game->komi) delta = 1;
 	else if (result < game->komi) delta = 0;
 
+	COUNT weight = game->resultWeight(result);
 	// from root go down
 	UCTNode* p = rootNode();
-	p->updateVisit(1, delta);
+	p->updateVisit(weight, delta);
 	for(vector<int>::iterator it = seqIn.begin(); it != seqIn.end(); ++it) {
 		vector<UCTNode*>& children = p->children;
 		vector<UCTNode*>::iterator j = children.begin();
@@ -92,7 +93,7 @@ void UCTTree::updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT 
 			UCTNode& c = *(*j);
 			if (c.move == *it) {
 				next = &c;
-				c.updateVisit(1, delta);
+				c.updateVisit(weight, delta);
 			}
 			else {
 				int d = moveDepth[p->level % 2][c.move];
@@ -250,13 +251,13 @@ bool UCTTree::tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardS
 
 	}
 
-	Logger& logger = Util::getTreeLogger();
-	if (logger.getLevel() >= 7) {
-		logger.debug("children");
-		for(int i=0; i<node->children.size(); ++i) {
-			poco_debug_f2(logger, "move = %d, level = %d", node->children[i]->move, node->children[i]->level);
-		}
-
-	}
+//	Logger& logger = Util::getTreeLogger();
+//	if (logger.getLevel() >= 7) {
+//		logger.debug("children");
+//		for(int i=0; i<node->children.size(); ++i) {
+//			poco_debug_f2(logger, "move = %d, level = %d", node->children[i]->move, node->children[i]->level);
+//		}
+//
+//	}
 	return true;
 }

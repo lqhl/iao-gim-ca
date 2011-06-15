@@ -27,7 +27,11 @@ SuperGoGame::SuperGoGame() :
 
 	useBook = Util::getBoolean("UseBook");
 
+	useBias = Util::getBoolean("UseBias");
+
 	preprocessChildren = Util::getBoolean("PreprocessChildren");
+
+	largeWinBonus = Util::getDouble("LargeWinBonus");
 	treeLock = new RWLock();
 
 	searchTime = timeLimit - 500;
@@ -61,7 +65,9 @@ SgPoint SuperGoGame::genMoveUCT() {
 		}
 	}
 
-	UCTNode* next = workers[0]->selectChildrenMEAN(tree, tree->rootNode());
+	UCTNode* next = NULL;
+	if (useBias) next = workers[0]->selectChildrenMEANBiased(tree, tree->rootNode());
+	else next = workers[0]->selectChildrenMEAN(tree, tree->rootNode());
 	if (Util::SearchDebugEnabled()) {
 		UCTNode* n = tree->rootNode();
 		fprintf(Util::LogFile(), "children of root:\n");
