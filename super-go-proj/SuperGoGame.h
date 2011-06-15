@@ -56,6 +56,8 @@ public:
 
 	bool useBook;
 
+	bool preprocessChildren;
+
 	vector<UCTSearchRunner*> workers;
 
 	RWLock* treeLock;

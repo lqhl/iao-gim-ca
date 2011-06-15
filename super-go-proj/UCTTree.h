@@ -29,6 +29,8 @@ public:
 
 	GoBoard* board;
 
+	bool preprocChildren;
+
 	UCTTree(SuperGoGame* game, int numNodes);
 
 	UCTNode* allocateNode() {
@@ -71,7 +73,7 @@ public:
 	bool tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game,
 			BoardState& state);
 
-	static const int RATIO = 1;
+	#define RATIO  0.5
 	void preprocess(GoBoard* board, UCTNode* node) {
 		poco_assert(board->Size() == UctPatterns::BOARD_SIZE);
 		SgPoint p = node->move;
@@ -92,6 +94,8 @@ public:
 
 	typedef vector<UCTNode*> NodeList;
 	void preprocessChildren(GoBoard* board, UCTNode* father, vector<UCTNode*>& children) {
+		if (preprocChildren)
+			return;
 		bool blackMove = board->ToPlay() == SG_BLACK;
 		bool nakade[SG_MAXPOINT];
 		bool atariDefense[SG_MAXPOINT];
@@ -113,10 +117,10 @@ public:
 
 		double value = blackMove ? 1.0 : 0.0;
 		for(NodeList::iterator it = children.begin(); it != children.end(); ++it) {
-			if (nakade[(*it)->move]) (*it)->updateRave(RATIO * 50, value);
-			if (atariDefense[(*it)->move]) (*it)->updateRave(RATIO * 30, value);
-			if (atariCapture[(*it)->move]) (*it)->updateRave(RATIO * 30, value);
-			if (lowLib[(*it)->move]) (*it)->updateRave(RATIO * 20, value);
+			if (nakade[(*it)->move]) (*it)->updateVisit(RATIO * 50, value);
+			if (atariDefense[(*it)->move]) (*it)->updateVisit(RATIO * 30, value);
+			if (atariCapture[(*it)->move]) (*it)->updateVisit(RATIO * 30, value);
+			if (lowLib[(*it)->move]) (*it)->updateVisit(RATIO * 20, value);
 		}
 	}
 

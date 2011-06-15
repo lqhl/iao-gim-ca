@@ -26,6 +26,8 @@ SuperGoGame::SuperGoGame() :
 	numThread = Util::getInt("NumThread");
 
 	useBook = Util::getBoolean("UseBook");
+
+	preprocessChildren = Util::getBoolean("PreprocessChildren");
 	treeLock = new RWLock();
 
 	searchTime = timeLimit - 500;
