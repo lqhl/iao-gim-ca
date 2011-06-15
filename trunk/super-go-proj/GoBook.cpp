@@ -278,6 +278,8 @@ bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBook::loca
 		for(int j = 0; j < pattern.col; ++j) {
 			int rowOffset = i - patternRow;
 			int colOffset = j - patternCol;
+			if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
+				return false;
 			SgPoint testPt = SgPointUtil::Pt(col+colOffset, row+rowOffset);
 			switch(pattern.pattern[i][j]) {
 				case '?':
@@ -324,6 +326,7 @@ double GoBook::evaluate(const GoBoard &board, SgBlackWhite color, SgPoint point)
 	double score = 1.0;
 	for(int i = 0; i < local.size(); ++i) {
 		if(match(board, color, point, local[i])) {
+			cerr << "Evaluation changed!" << endl;
 			score += (0.1) * local[i].col * local[i].row;
 		}
 	}

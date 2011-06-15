@@ -38,6 +38,8 @@ SuperGoGame::SuperGoGame() :
 
 	book = NULL;
 
+	openPhase = true;
+
 }
 
 void SuperGoGame::setPlayer(int player) {
@@ -94,7 +96,8 @@ SgPoint SuperGoGame::genMoveUCT() {
 }
 
 SgPoint SuperGoGame::genMove() {
-	if (book != NULL) {
+	
+	if (openPhase && book != NULL) {
 		SgPoint p = book->matchBook(board, board.ToPlay());
 		if (p != SG_NULLMOVE) {
 			fprintf(Util::LogFile(), "** BOOK ** (i = %d) (%d %d)\n", numStep, Row(p), Col(p));
@@ -102,7 +105,7 @@ SgPoint SuperGoGame::genMove() {
 			return p;
 		}
 	}
-	book = NULL; // not useful anymore
+	openPhase = false; // not useful anymore
 	return genMoveUCT();
 
 }
@@ -116,4 +119,6 @@ void SuperGoGame::init() {
 	}
 
 	tree = new UCTTree(this, numNode);
+
+	openPhase = true;
 }

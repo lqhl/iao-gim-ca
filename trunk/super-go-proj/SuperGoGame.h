@@ -72,6 +72,7 @@ public:
 
 	GoBoard board;
 
+	bool openPhase;
 
 	SuperGoGame();
 
