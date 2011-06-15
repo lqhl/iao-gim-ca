@@ -33,6 +33,7 @@ static int gtp_final_status_list(char *s);
 static int gtp_showboard(char *s);
 
 ofstream fout("fuck.txt");
+int steps = 0;
 
 /* List of known commands. */
 static struct gtp_command commands[] = {
@@ -214,6 +215,10 @@ gtp_play(char *s)
 	if (!gtp_decode_move(s, &color, &i, &j))
 		return gtp_failure("invalid color or coordinate");
 
+	SG_ASSERT_BW(color);
+	fout << (color == SG_BLACK ? "black " : "white ") << steps++ << ": " << i << ' ' << j << endl;
+	fout.flush();
+
 	if (i == -1 && j == -1)
 		game->execute(SG_PASS, color);
 	else
@@ -231,6 +236,8 @@ gtp_genmove(char *s)
 	if (!gtp_decode_color(s, &color))
 		return gtp_failure("invalid color");
 
+	SG_ASSERT_BW(color);
+
 	SgPoint move = game->genMoveUCT();
 	game->execute(move, color);
 
@@ -242,7 +249,7 @@ gtp_genmove(char *s)
 		j = Row(move);
 	}
 
-	fout << i << ' ' << j << endl;
+	fout << (color == SG_BLACK ? "black " : "white ") << steps++ << ": " << i << ' ' << j << endl;
 	fout.flush();
 
 	gtp_start_response(GTP_SUCCESS);

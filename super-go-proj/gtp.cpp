@@ -407,8 +407,6 @@ gtp_print_vertices(int n, int movei[], int movej[])
 	  char c = 'A' + ri - 1;
 	  if (c >= 'I')
 		  c++;
-      fout << "I play " << c << rj << endl;
-	  fout.flush();
       gtp_printf("%c%d", c, rj);
     }
   }
