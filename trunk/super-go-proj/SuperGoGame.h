@@ -74,6 +74,8 @@ public:
 
 	bool openPhase;
 
+	double patternWeight;
+
 	SuperGoGame();
 
 	void setPlayer(int player);

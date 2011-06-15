@@ -32,6 +32,9 @@ SuperGoGame::SuperGoGame() :
 	preprocessChildren = Util::getBoolean("PreprocessChildren");
 
 	largeWinBonus = Util::getDouble("LargeWinBonus");
+
+	patternWeight = Util::getDouble("PatternWeight");
+
 	treeLock = new RWLock();
 
 	searchTime = timeLimit - 500;

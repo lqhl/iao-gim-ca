@@ -32,7 +32,7 @@ static int gtp_final_score(char *s);
 static int gtp_final_status_list(char *s);
 static int gtp_showboard(char *s);
 
-ofstream fout("fuck.txt");
+ofstream fout("super-go-gtp-dump.txt");
 int steps = 0;
 
 /* List of known commands. */
