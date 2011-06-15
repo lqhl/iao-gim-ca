@@ -89,6 +89,10 @@ public:
 
 	UCTNode* selectChildrenMEAN(UCTTree* tree, UCTNode* node);
 
+	UCTNode* selectChildrenMEANBiased(UCTTree* tree, UCTNode* node);
+
+	void UCTSearchRunner::getBiasedCoefficient(GoBoard* board, UCTTree* tree, UCTNode* father, vector<VALUE>& bias);
+
 	UCTNode* selectChildrenRAVE(UCTTree* tree, UCTNode* node);
 
 	virtual void run();

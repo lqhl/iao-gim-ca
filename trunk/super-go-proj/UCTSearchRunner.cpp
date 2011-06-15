@@ -35,6 +35,8 @@ void UCTSearchRunner::run() {
 			game->treeLock);
 }
 
+#define DEFAULT_WIN 5.0
+
 void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 		GoBoard* board, UCTTree* tree, RWLock* treeLock) {
 	playOutBoard.Init(*board);
@@ -78,9 +80,9 @@ void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 			} else {
 				// TODO hack
 				if (state == BLACK_WIN)
-					res = game->komi + 1.0;
+					res = game->komi + DEFAULT_WIN;
 				else if (state == WHITE_WIN)
-					res = game->komi - 1.0;
+					res = game->komi - DEFAULT_WIN;
 				else
 					res = game->komi;
 			}
@@ -425,6 +427,94 @@ UCTNode* UCTSearchRunner::selectChildrenMEAN(UCTTree* tree, UCTNode* node) {
 	}
 	return k;
 }
+
+typedef vector<UCTNode*> NodeList;
+void UCTSearchRunner::getBiasedCoefficient(GoBoard* board, UCTTree* tree, UCTNode* father, vector<VALUE>& bias) {
+	poco_assert(game->useBias);
+	poco_assert(bias.empty());
+	bool blackMove = board->ToPlay() == SG_BLACK;
+	bool nakade[SG_MAXPOINT];
+	bool atariDefense[SG_MAXPOINT];
+	bool atariCapture[SG_MAXPOINT];
+	bool lowLib[SG_MAXPOINT];
+	fill(nakade, nakade+SG_MAXPOINT, false);
+	fill(atariDefense, atariDefense+SG_MAXPOINT, false);
+	fill(atariCapture, atariCapture+SG_MAXPOINT, false);
+	fill(lowLib, lowLib+SG_MAXPOINT, false);
+
+
+	for (GoBoard::Iterator it(*board); it; ++it) {
+		tree->genNakade(board, *it, nakade);
+		tree->generateAtariCaptureMove(board, *it, atariCapture);
+		tree->generateAtariDefenseMove(board, *it, atariDefense);
+		tree->generateLowLibertyMove(board, *it, lowLib);
+	}
+
+
+	NodeList& children = father->children;
+	for(NodeList::iterator it = children.begin(); it != children.end(); ++it) {
+		double b = 1.0;
+		SgPoint move = (*it)->move;
+		if (nakade[move]) b *= 2;
+		if (atariDefense[move]) {
+			b *= 1.2;
+			fprintf(Util::LogFile(), "Atari Defense Bias Added");
+		}
+		if (atariCapture[move]) {
+			b *= 1.5;
+			fprintf(Util::LogFile(), "Atari Capture Bias Added");
+		}
+		if (lowLib[move]) b *= 1.1;
+		if (UctPatterns::Line(move) == 1) b *= 0.9;
+
+		double e = game->book->evaluate(*board, board->ToPlay(), move);
+		b *= e;
+		fprintf(Util::LogFile(), "pattern evaluation = %.2f\n", e);
+		bias.push_back(b);
+	}
+}
+
+UCTNode* UCTSearchRunner::selectChildrenMEANBiased(UCTTree* tree, UCTNode* node) {
+	UCTNode* k = NULL;
+	COUNT best = -1;
+	vector<UCTNode*>& v = node->children;
+	bool blackMove = node->level % 2 == 0;
+
+	GoBoard& board = game->board;
+	vector<VALUE> bias;
+	getBiasedCoefficient(&board, tree, node, bias);
+
+	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
+		UCTNode& m = *(*it);
+		if (!board.IsEmpty(m.move)) continue;
+		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
+			// the player will lose
+			if (m.state == m.level % 2)
+				continue;
+			// he wins
+			else {
+				node->state = (BoardState) (node->level % 2);
+				return &m;
+			}
+
+		}
+
+		double visitValue = blackMove ? m.visitValue : 1 - m.visitValue;
+		// add the bias
+		visitValue *= bias[it - v.begin()];
+
+		SgPoint move = m.move;
+
+		
+		if (k == NULL || (visitValue > best)) {
+			best = visitValue;
+			k = &m;
+		}
+	}
+	return k;
+}
+
+
 
 UCTNode* UCTSearchRunner::selectChildrenRAVE(UCTTree* tree, UCTNode* node) {
 	UCTNode* k = NULL;

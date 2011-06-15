@@ -17,16 +17,14 @@ using Poco::RWLock;
 
 using GoBoardUtil::getGoNeighbors;
 
-
 class SuperGoGame;
 
 typedef void (SuperGoGame::*GenMoveFunc)();
 
-
 class SuperGoGame {
 public:
 	static const int BOARD_SIZE = 13;
-//	static const int NS = BOARD_SIZE+1, WE = 1;
+	//	static const int NS = BOARD_SIZE+1, WE = 1;
 
 	int numThread;
 
@@ -58,6 +56,10 @@ public:
 
 	bool preprocessChildren;
 
+	bool useBias;
+
+	double largeWinBonus;
+
 	vector<UCTSearchRunner*> workers;
 
 	RWLock* treeLock;
@@ -69,6 +71,7 @@ public:
 	int player, opponent;
 
 	GoBoard board;
+
 
 	SuperGoGame();
 
@@ -87,17 +90,20 @@ public:
 	COUNT evaluate(BOARD* board) {
 		int white = 0, black = 0;
 		bool marked[SG_MAXPOINT];
-		fill(marked, marked+SG_MAXPOINT, false);
+		fill(marked, marked + SG_MAXPOINT, false);
 
 		//if (Util::UctDebugEnabled()) {
 		//	board->printBoard(cerr);
 		//}
-		for(BOARD::Iterator it(*board); it; ++it) {
+		for (BOARD::Iterator it(*board); it; ++it) {
 			SgBoardColor c = board->GetColor(*it);
 			poco_assert(c != SG_BORDER);
-			if (c == SG_BLACK) black += 2;
-			else if (c == SG_WHITE) white += 2;
-			else if (marked[*it]) continue;
+			if (c == SG_BLACK)
+				black += 2;
+			else if (c == SG_WHITE)
+				white += 2;
+			else if (marked[*it])
+				continue;
 
 			// flood
 
@@ -109,14 +115,16 @@ public:
 			stack[k++] = *it;
 
 			SgArrayList<SgPoint, 4> nb;
-			while(k > 0) {
+			while (k > 0) {
 				SgPoint cur = stack[--k];
 				nb.Clear();
 				//nb.reserve(4);
 				getGoNeighbors(*board, *it, nb);
-				for(SgArrayList<SgPoint, 4>::Iterator j(nb); j; ++j) {
-					if (board->GetColor(*j) == SG_BLACK) blackNb = true;
-					else if (board->GetColor(*j) == SG_WHITE) whiteNb = true;
+				for (SgArrayList<SgPoint, 4>::Iterator j(nb); j; ++j) {
+					if (board->GetColor(*j) == SG_BLACK)
+						blackNb = true;
+					else if (board->GetColor(*j) == SG_WHITE)
+						whiteNb = true;
 					else {
 						poco_assert(board->GetColor(*j) == SG_EMPTY);
 						if (!marked[*j]) {
@@ -129,13 +137,19 @@ public:
 
 			}
 
-			if (blackNb) black += num;
-			if (!whiteNb) black += num;
-			if (whiteNb) white += num;
-			if (!blackNb) white += num;
+			if (blackNb)
+				black += num;
+			if (!whiteNb)
+				black += num;
+			if (whiteNb)
+				white += num;
+			if (!blackNb)
+				white += num;
 		}
 		if (Util::UctDebugEnabled() && false) {
-			fprintf(Util::LogFile(), "simulation result: %.1f, black = %.1f, white = %.1f\n", (black - white) / 2.0, black / 2.0, white / 2.0);
+			fprintf(Util::LogFile(),
+					"simulation result: %.1f, black = %.1f, white = %.1f\n",
+					(black - white) / 2.0, black / 2.0, white / 2.0);
 		}
 		return (black - white) / 2.0;
 	}
@@ -143,14 +157,17 @@ public:
 	template<typename BOARD>
 	BoardState evaluateState(BOARD* board) {
 		COUNT res = evaluate(board);
-		if (res > komi) return BLACK_WIN;
-		else if (res < komi) return WHITE_WIN;
-		else return DRAW;
+		if (res > komi)
+			return BLACK_WIN;
+		else if (res < komi)
+			return WHITE_WIN;
+		else
+			return DRAW;
 	}
 
 	void testRun(int num, ostream& out) {
 		int k = 0;
-		for(int i=0; i<num; ++i) {
+		for (int i = 0; i < num; ++i) {
 			cerr << "i = " << i << endl;
 			SgPoint move = genMove();
 			if (move == SG_PASS) {
@@ -159,13 +176,18 @@ public:
 					out << "Game ends in two passes\n";
 					break;
 				}
-			}
-			else k = 0;
+			} else
+				k = 0;
 			execute(move, i % 2 == 0 ? SG_BLACK : SG_WHITE);
 
 			out << "i = " << i << endl;
 			board.printBoard(out);
 		}
+	}
+
+	COUNT resultWeight(double res) {
+		res -= komi;
+		return 1.0 + (res > 0 ? res : -res) * largeWinBonus;
 	}
 };
 
