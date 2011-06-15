@@ -71,38 +71,64 @@ public:
 	bool tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game,
 			BoardState& state);
 
+	static const int RATIO = 1;
 	void preprocess(GoBoard* board, UCTNode* node) {
 		poco_assert(board->Size() == UctPatterns::BOARD_SIZE);
 		SgPoint p = node->move;
 
 		bool blackMove = board->ToPlay() == SG_BLACK;
 		if (UctPatterns::Line(p) == 3)
-			node->updateRave(6.67, blackMove ? 1.0 : 0.0);
+			node->updateRave(RATIO * 15, blackMove ? 1.0 : 0.0);
 		if (UctPatterns::Line(p) == 1)
-			node->updateRave(6.67, blackMove ? 0.0 : 1.0);
+			node->updateRave(RATIO * 15, blackMove ? 0.0 : 1.0);
 		if (UctPatterns::matchAny(board, p))
-			node->updateRave(5.0, blackMove ? 1.0 : 0.0);
+			node->updateRave(RATIO * 11.5, blackMove ? 1.0 : 0.0);
 		if (UctPatterns::match2BadKogeima(board, p))
-			node->updateRave(2.5, blackMove ? 0.0 : 1.0);
+			node->updateRave(RATIO * 5, blackMove ? 0.0 : 1.0);
 		if (UctPatterns::match2EmptyTriangle(board, p))
-			node->updateRave(5, blackMove ? 0.0 : 1.0);
+			node->updateRave(RATIO * 10, blackMove ? 0.0 : 1.0);
 
 	}
 
-	void preprocessChildren(GoBoard* board, vector<SgPoint>& moves) {
-		vector<SgPoint> nakadeMoves;
-		for (vector<SgPoint>::iterator it = moves.begin(); it != moves.end(); ++it)
-			genNakade(board, *it, moves);
+	typedef vector<UCTNode*> NodeList;
+	void preprocessChildren(GoBoard* board, UCTNode* father, vector<UCTNode*>& children) {
+		bool blackMove = board->ToPlay() == SG_BLACK;
+		bool nakade[SG_MAXPOINT];
+		bool atariDefense[SG_MAXPOINT];
+		bool atariCapture[SG_MAXPOINT];
+		bool lowLib[SG_MAXPOINT];
+		fill(nakade, nakade+SG_MAXPOINT, false);
+		fill(atariDefense, atariDefense+SG_MAXPOINT, false);
+		fill(atariCapture, atariCapture+SG_MAXPOINT, false);
+		fill(lowLib, lowLib+SG_MAXPOINT, false);
+		
+
+		for (GoBoard::Iterator it(*board); it; ++it) {
+			genNakade(board, *it, nakade);
+			generateAtariCaptureMove(board, *it, atariCapture);
+			generateAtariDefenseMove(board, *it, atariDefense);
+			generateLowLibertyMove(board, *it, lowLib);
+		}
+
+
+		double value = blackMove ? 1.0 : 0.0;
+		for(NodeList::iterator it = children.begin(); it != children.end(); ++it) {
+			if (nakade[(*it)->move]) (*it)->updateRave(RATIO * 50, value);
+			if (atariDefense[(*it)->move]) (*it)->updateRave(RATIO * 30, value);
+			if (atariCapture[(*it)->move]) (*it)->updateRave(RATIO * 30, value);
+			if (lowLib[(*it)->move]) (*it)->updateRave(RATIO * 20, value);
+		}
 	}
 
-	void PushBack(vector<SgPoint>& moves, SgPoint p) {
+
+	void SetMarked(bool marked[], SgPoint p) {
 		if (board->IsLegal(p))
-			moves.push_back(p);
+			marked[p] = true;
 	}
 
 
 	void genNakade(GoBoard* board, SgPoint p,
-			vector<SgPoint>& moves) {
+			bool marked[]) {
 		SgBlackWhite toPlay = board->ToPlay();
 		if (board->IsEmpty(p) && board->NumNeighbors(p, toPlay) == 0) {
 			int numEmptyNeighbors = board->NumEmptyNeighbors(p);
@@ -117,7 +143,7 @@ public:
 						if (++n > 2)
 							break;
 					}
-				PushBack(moves, p);
+				SetMarked(marked, p);
 			} else if (numEmptyNeighbors == 1) {
 				for (SgNb4Iterator it(p); it; ++it)
 					if (board->IsEmpty(*it)) {
@@ -129,7 +155,7 @@ public:
 								if (board->NumEmptyNeighbors(*it2) == 1
 										&& board->NumNeighbors(*it2, toPlay)
 												== 0)
-									PushBack(moves, *it);
+									SetMarked(marked, *it);
 								break;
 							}
 						break;
@@ -140,16 +166,16 @@ public:
 	}
 
 	void generateAtariCaptureMove(GoBoard* board, SgPoint p,
-			vector<SgPoint>& moves) {
+			bool marked[]) {
 		if (board->GetColor(p) == SG_WHITE + SG_BLACK - board->ToPlay()
 				&& board->InAtari(p)) {
 			SgMove mv = board->TheLiberty(p);
-			PushBack(moves, mv);
+			SetMarked(marked, mv);
 		}
 	}
 
 	void generateAtariDefenseMove(GoBoard* board, SgPoint p,
-			vector<SgPoint>& moves) {
+			bool marked[]) {
 		SgBlackWhite toPlay = board->ToPlay();
 		if (board->GetColor(p) != SG_WHITE + SG_BLACK - toPlay)
 			return;
@@ -168,7 +194,7 @@ public:
 			// Check if move on last liberty would escape the atari
 			SgPoint theLiberty = board->TheLiberty(anchor);
 			if (!GoBoardUtil::SelfAtari(*board, theLiberty))
-				PushBack(moves, theLiberty);
+				SetMarked(marked, theLiberty);
 
 			// we can escape atari if we can capture the opponent's blocks
 			// Capture adjacent blocks
@@ -181,13 +207,13 @@ public:
 				// GoBoardUtil::SelfAtari(theLiberty), if the move escapes the
 				// atari
 				if (oppLiberty != theLiberty)
-					PushBack(moves, oppLiberty);
+					SetMarked(marked, oppLiberty);
 			}
 		}
 	}
 
 	void generateLowLibertyMove(GoBoard* board, SgPoint p,
-			vector<SgPoint>& moves) {
+			bool marked[]) {
 
 		const SgBlackWhite toPlay = board->ToPlay();
 
@@ -196,7 +222,7 @@ public:
 		// take liberty of last move
 		if (board->NumLiberties(p) == 2) {
 			const SgPoint anchor = board->Anchor(p);
-			selectLibertyMove(board, moves, anchor);
+			selectLibertyMove(board, marked, anchor);
 		}
 
 		if (board->NumNeighbors(p, toPlay) != 0) {
@@ -208,7 +234,7 @@ public:
 					const SgPoint anchor = board->Anchor(*it);
 					if (!ourLowLibBlocks.Contains(anchor)) {
 						ourLowLibBlocks.PushBack(anchor);
-						selectLibertyMove(board, moves, anchor);
+						selectLibertyMove(board, marked, anchor);
 					}
 				}
 			}
@@ -217,13 +243,13 @@ public:
 	}
 
 	void selectLibertyMove(GoBoard* board,
-			vector<SgPoint>& moves, SgPoint anchor) {
+			bool marked[], SgPoint anchor) {
 		// TODO simplified version
 		SgPoint ignoreOther;
 		if (!GoBoardUtil::IsSimpleChain(*board, anchor, ignoreOther))
 			for (GoBoard::LibertyIterator it(*board, anchor); it; ++it)
 				if (!GoBoardUtil::SelfAtari(*board, *it))
-					PushBack(moves, *it);
+					SetMarked(marked, *it);
 	}
 
 };

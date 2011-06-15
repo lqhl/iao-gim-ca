@@ -214,6 +214,7 @@ bool UCTTree::tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardS
 	if (node->level < total)
 		children.reserve(total - node->level + 10);
 
+	vector<UCTNode*> newChildren;
 	for (GoBoard::Iterator it(*board); it; ++it) {
 		if (!asChild[*it] && board->GetColor(*it) == SG_EMPTY
 			&& board->IsLegal(*it) && !IsSimpleEye(*board, *it, toPlay)) {
@@ -224,8 +225,10 @@ bool UCTTree::tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardS
 				n->move = *it;
 				preprocess(board, n);
 				children.push_back(n);
+				newChildren.push_back(n);
 		}
 	}
+	preprocessChildren(board, node, newChildren);
 	node->fullyExpanded = true;
 
 	if (children.empty()) {
