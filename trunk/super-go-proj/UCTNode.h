@@ -45,9 +45,9 @@ public:
 		return !children.empty();
 	}
 
-	void updateVisit(VALUE value) {
-		VALUE t = visitValue * visitCount + value;
-		visitCount += 1;
+	void updateVisit(COUNT weight, VALUE value) {
+		VALUE t = visitValue * visitCount + value * weight;
+		visitCount += weight;
 		visitValue = t / visitCount;
 	}
 

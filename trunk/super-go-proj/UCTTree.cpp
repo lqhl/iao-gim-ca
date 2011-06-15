@@ -14,6 +14,7 @@ Random UCTTree::rand;
 
 UCTTree::UCTTree(SuperGoGame* game, int numNodes) {
 	this->game = game;
+	this->preprocChildren = game->preprocessChildren;
 	this->numNodes = numNodes;
 	node = new UCTNode[numNodes];
 	freeList.clear();
@@ -80,7 +81,7 @@ void UCTTree::updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT 
 
 	// from root go down
 	UCTNode* p = rootNode();
-	p->updateVisit(delta);
+	p->updateVisit(1, delta);
 	for(vector<int>::iterator it = seqIn.begin(); it != seqIn.end(); ++it) {
 		vector<UCTNode*>& children = p->children;
 		vector<UCTNode*>::iterator j = children.begin();
@@ -91,7 +92,7 @@ void UCTTree::updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT 
 			UCTNode& c = *(*j);
 			if (c.move == *it) {
 				next = &c;
-				c.updateVisit(delta);
+				c.updateVisit(1, delta);
 			}
 			else {
 				int d = moveDepth[p->level % 2][c.move];
