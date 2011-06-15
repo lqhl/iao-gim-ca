@@ -54,6 +54,7 @@ public:
 	// first play urgency
 	double firstPlayValue;
 
+	bool useBook;
 
 	vector<UCTSearchRunner*> workers;
 

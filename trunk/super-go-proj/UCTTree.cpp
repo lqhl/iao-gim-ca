@@ -26,6 +26,7 @@ UCTTree::UCTTree(SuperGoGame* game, int numNodes) {
 	UCTNode* n = allocateNode();
 	n->level = 0;
 	root = n - node;
+	board = &game->board;
 
 
 }
