@@ -216,15 +216,6 @@ GoBook::GoBook() {
 		temp.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp);
 
-		for(int i = 0; i < temp.row; ++i) {
-			for(int j = 0; j < temp.col; ++j) {
-				cerr << temp.pattern[i][j];
-			}
-			cerr << endl;
-		}
-		cerr << endl;
-
-
 		// Start transformation
 		// 1. Rotate 90 anticlockwise
 		GoBook::localPattern temp90;
@@ -249,15 +240,6 @@ GoBook::GoBook() {
 		temp90.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp90);
 
-		for(int i = 0; i < temp90.row; ++i) {
-			for(int j = 0; j < temp90.col; ++j) {
-				cerr << temp90.pattern[i][j];
-			}
-			cerr << endl;
-		}
-		cerr << endl;
-
-
 		// 2. Rotate 180 anticlockwise
 		GoBook::localPattern temp180;
 		temp180.row = temp.row;
@@ -273,15 +255,6 @@ GoBook::GoBook() {
 		}
 		temp180.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp180);
-
-		for(int i = 0; i < temp180.row; ++i) {
-			for(int j = 0; j < temp180.col; ++j) {
-				cerr << temp180.pattern[i][j];
-			}
-			cerr << endl;
-		}
-		cerr << endl;
-
 
 		// 3. Rotate 270 anticlockwise
 		GoBook::localPattern temp270;
@@ -306,13 +279,6 @@ GoBook::GoBook() {
 		temp270.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp270);
 
-		for(int i = 0; i < temp270.row; ++i) {
-			for(int j = 0; j < temp270.col; ++j) {
-				cerr << temp270.pattern[i][j];
-			}
-			cerr << endl;
-		}
-		cerr << endl;
 	}
 	cerr << local.size() << endl;
 	fin2.close();
