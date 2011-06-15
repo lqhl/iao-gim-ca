@@ -244,10 +244,10 @@ public:
 	void printBoard(ostream& out) {
 		for (int i = 1; i <= m_size; i++) {
 			for (int j = 1; j <= m_size; j++) {
-				if (IsEmpty(SgPointUtil::Pt(i, j)))
+				if (IsEmpty(SgPointUtil::Pt(j, i)))
 					out << '.';
 				else
-					out << SgBW(GetColor(SgPointUtil::Pt(i, j)));
+					out << SgBW(GetColor(SgPointUtil::Pt(j, i)));
 			}
 			out << endl;
 		}

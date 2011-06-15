@@ -25,6 +25,7 @@ SuperGoGame::SuperGoGame() :
 
 	numThread = Util::getInt("NumThread");
 
+	useBook = Util::getBoolean("UseBook");
 	treeLock = new RWLock();
 
 	searchTime = timeLimit - 500;
@@ -100,7 +101,8 @@ SgPoint SuperGoGame::genMove() {
 
 
 void SuperGoGame::init() {
-	book = new GoBook();
+	if (useBook)
+		book = new GoBook();
 	for (int i = 0; i < numThread; ++i) {
 		workers.push_back(new UCTSearchRunner(this));
 	}
