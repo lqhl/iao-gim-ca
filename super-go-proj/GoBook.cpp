@@ -55,6 +55,9 @@ SgPoint point(int pos, char ch) {
 	return SgPointUtil::Pt(col, pos);
 }
 
+
+
+
 GoBook::GoBook() {
 	ifstream fin("book.dat");
 	string str;
@@ -190,6 +193,30 @@ GoBook::GoBook() {
 
 	cerr << GoBook::capacity << endl;
 	cerr << moves.size() << endl;
+
+	ifstream fin2("pattern.db");
+	while(! fin2.eof() ) {
+		GoBook::localPattern temp;
+		fin2 >> temp.row;
+		fin2 >> temp.col;
+		//cerr << temp.row << " " << temp.col << endl;
+		int Srow = 0;
+		int Scol = 0;
+		for(int i = 0; i < temp.row; ++i) {
+			for(int j = 0; j < temp.col; ++j) {
+				fin2 >> temp.pattern[i][j];
+				//cerr << temp.pattern[i][j] << endl;
+				if(temp.pattern[i][j] == '*') {
+					Srow = i + 1;
+					Scol = j + 1;
+				}
+			}
+		}
+		temp.strategy = SgPointUtil::Pt(Scol, Srow);
+		GoBook::local.push_back(temp);
+	}
+	cerr << local.size() << endl;
+	fin2.close();
 }
 
 
@@ -202,7 +229,7 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 				++cnt;
 		}
 	}
-	cerr << "Count: " << cnt << endl;
+	//cerr << "Count: " << cnt << endl;
 
 
 	for(int i = 0; i < GoBook::capacity; ++i) {
@@ -230,16 +257,78 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 		}
 		if(success) {
 			if(board.IsEmpty(moves[i])) {
-				cerr << "Success" << endl;
-				cerr << SgPointUtil::Row(moves[i]) << " " << SgPointUtil::Col(moves[i]) << endl;
+				//cerr << "Success" << endl;
+				//cerr << SgPointUtil::Row(moves[i]) << " " << SgPointUtil::Col(moves[i]) << endl;
 				return moves[i];
-			}	
+			}
 		}
 	}
 	return SG_NULLMOVE;
 }
 
 
+bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBook::localPattern pattern) {
+	int patternRow = SgPointUtil::Row(pattern.strategy) - 1;
+	int patternCol = SgPointUtil::Col(pattern.strategy) - 1;
+	int row = SgPointUtil::Row(point);
+	int col = SgPointUtil::Col(point);
+	SgBlackWhite myColor = color;
+	SgBlackWhite yourColor = (color == SG_BLACK ? SG_WHITE:SG_BLACK);
+	for(int i = 0; i < pattern.row; ++i) {
+		for(int j = 0; j < pattern.col; ++j) {
+			int rowOffset = i - patternRow;
+			int colOffset = j - patternCol;
+			SgPoint testPt = SgPointUtil::Pt(col+colOffset, row+rowOffset);
+			switch(pattern.pattern[i][j]) {
+				case '?':
+					break;
+				case '.':
+					if(!board.IsEmpty(testPt))
+						return false;
+					break;
+				case 'X':
+					if(board.GetColor(testPt) != yourColor)
+						return false;
+					break;
+				case 'O':
+					if(board.GetColor(testPt) != myColor)
+						return false;
+					break;
+				case 'x':
+					if(board.GetColor(testPt) != yourColor && !board.IsEmpty(testPt))
+						return false;
+					break;
+				case 'o':
+					if(board.GetColor(testPt) != myColor && !board.IsEmpty(testPt))
+						return false;
+					break;
+				case '|':
+					if(!board.IsBorder(testPt))
+						return false;
+					break;
+				case '-':
+					if(!board.IsBorder(testPt))
+						return false;
+					break;
+				case '+':
+					//if(!board.InCorner())
+						//return false;
+					break;
+			}
+		}
+	}
+	return true;
+}
+
+double GoBook::evaluate(const GoBoard &board, SgBlackWhite color, SgPoint point) {
+	double score = 1.0;
+	for(int i = 0; i < local.size(); ++i) {
+		if(match(board, color, point, local[i])) {
+			score += (0.1) * local[i].col * local[i].row;
+		}
+	}
+	return score;
+}
 
 
 GoBook::~GoBook() {
