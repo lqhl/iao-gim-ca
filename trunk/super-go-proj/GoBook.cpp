@@ -229,7 +229,7 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 			}
 		}
 		if(success) {
-			if(!board.IsEmpty(moves[i])) {
+			if(board.IsEmpty(moves[i])) {
 				cerr << "Success" << endl;
 				cerr << SgPointUtil::Row(moves[i]) << " " << SgPointUtil::Col(moves[i]) << endl;
 				return moves[i];
