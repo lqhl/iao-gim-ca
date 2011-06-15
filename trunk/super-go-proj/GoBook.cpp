@@ -6,6 +6,7 @@
 #include <fstream>
 #include <string>
 #include <vector>
+#include <cmath>
 
 using namespace std;
 
@@ -214,6 +215,104 @@ GoBook::GoBook() {
 		}
 		temp.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp);
+
+		for(int i = 0; i < temp.row; ++i) {
+			for(int j = 0; j < temp.col; ++j) {
+				cerr << temp.pattern[i][j];
+			}
+			cerr << endl;
+		}
+		cerr << endl;
+
+
+		// Start transformation
+		// 1. Rotate 90 anticlockwise
+		GoBook::localPattern temp90;
+		temp90.row = temp.col;
+		temp90.col = temp.row;
+		for(int i = 0; i < temp.col; ++i) {
+			for(int j = 0; j < temp.row; ++j) {
+				if(temp.pattern[j][temp.col - 1 - i] == '-')
+					temp90.pattern[i][j] = '|';
+				else {
+					if(temp.pattern[j][temp.col - 1 - i] == '|')
+						temp90.pattern[i][j] = '-';
+					else
+						temp90.pattern[i][j] = temp.pattern[j][temp.col - 1 - i];
+				}
+				if(temp90.pattern[i][j] == '*') {
+					Srow = i + 1;
+					Scol = j + 1;
+				}
+			}
+		}
+		temp90.strategy = SgPointUtil::Pt(Scol, Srow);
+		GoBook::local.push_back(temp90);
+
+		for(int i = 0; i < temp90.row; ++i) {
+			for(int j = 0; j < temp90.col; ++j) {
+				cerr << temp90.pattern[i][j];
+			}
+			cerr << endl;
+		}
+		cerr << endl;
+
+
+		// 2. Rotate 180 anticlockwise
+		GoBook::localPattern temp180;
+		temp180.row = temp.row;
+		temp180.col = temp.col;
+		for(int i = 0; i < temp.row; ++i) {
+			for(int j = 0; j < temp.col; ++j) {
+				temp180.pattern[i][j] = temp.pattern[temp.row - i - 1][temp.col - 1 - j];
+				if(temp180.pattern[i][j] == '*') {
+					Srow = i + 1;
+					Scol = j + 1;
+				}
+			}
+		}
+		temp180.strategy = SgPointUtil::Pt(Scol, Srow);
+		GoBook::local.push_back(temp180);
+
+		for(int i = 0; i < temp180.row; ++i) {
+			for(int j = 0; j < temp180.col; ++j) {
+				cerr << temp180.pattern[i][j];
+			}
+			cerr << endl;
+		}
+		cerr << endl;
+
+
+		// 3. Rotate 270 anticlockwise
+		GoBook::localPattern temp270;
+		temp270.row = temp.col;
+		temp270.col = temp.row;
+		for(int i = 0; i < temp.col; ++i) {
+			for(int j = 0; j < temp.row; ++j) {
+				if(temp.pattern[temp.row - 1 - j][i] == '-')
+					temp270.pattern[i][j] = '|';
+				else {
+					if(temp.pattern[temp.row - 1 - j][i] == '|')
+						temp270.pattern[i][j] = '-';
+					else
+						temp270.pattern[i][j] = temp.pattern[temp.row - 1 - j][i];
+				}
+				if(temp270.pattern[i][j] == '*') {
+					Srow = i + 1;
+					Scol = j + 1;
+				}
+			}
+		}
+		temp270.strategy = SgPointUtil::Pt(Scol, Srow);
+		GoBook::local.push_back(temp270);
+
+		for(int i = 0; i < temp270.row; ++i) {
+			for(int j = 0; j < temp270.col; ++j) {
+				cerr << temp270.pattern[i][j];
+			}
+			cerr << endl;
+		}
+		cerr << endl;
 	}
 	cerr << local.size() << endl;
 	fin2.close();
@@ -267,17 +366,18 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 }
 
 
-bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBook::localPattern pattern) {
+inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBook::localPattern pattern) {
 	int patternRow = SgPointUtil::Row(pattern.strategy) - 1;
 	int patternCol = SgPointUtil::Col(pattern.strategy) - 1;
 	int row = SgPointUtil::Row(point);
 	int col = SgPointUtil::Col(point);
 	SgBlackWhite myColor = color;
 	SgBlackWhite yourColor = (color == SG_BLACK ? SG_WHITE:SG_BLACK);
+
 	for(int i = 0; i < pattern.row; ++i) {
 		for(int j = 0; j < pattern.col; ++j) {
-			int rowOffset = i - patternRow;
 			int colOffset = j - patternCol;
+			int rowOffset = i - patternRow;
 			if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
 				return false;
 			SgPoint testPt = SgPointUtil::Pt(col+colOffset, row+rowOffset);
@@ -305,16 +405,15 @@ bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBook::loca
 						return false;
 					break;
 				case '|':
-					if(!board.IsBorder(testPt))
+					if(SgPointUtil::Col(testPt) != 1 && SgPointUtil::Col(testPt) != 13) 
 						return false;
 					break;
 				case '-':
-					if(!board.IsBorder(testPt))
+					if(SgPointUtil::Row(testPt) != 1 && SgPointUtil::Row(testPt) != 13)
 						return false;
 					break;
 				case '+':
-					//if(!board.InCorner())
-						//return false;
+					// ignore.
 					break;
 			}
 		}
@@ -322,15 +421,29 @@ bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBook::loca
 	return true;
 }
 
+
+
+inline int scoreFunction(int row, int col) {
+	if(row <= 3 && col <= 3) {
+		return 2;
+	}
+	else {
+		if(row <= 10 && col <= 10) {
+			return 4;
+		}
+		else return 6;
+	}
+}
+
 double GoBook::evaluate(const GoBoard &board, SgBlackWhite color, SgPoint point) {
-	double score = 1.0;
+	double score = 0.0;
 	for(int i = 0; i < local.size(); ++i) {
 		if(match(board, color, point, local[i])) {
-			cerr << "Evaluation changed!" << endl;
-			score += (0.1) * local[i].col * local[i].row;
+			//cerr << "Evaluation changed!" << endl;
+			score += log10(double(scoreFunction(local[i].row, local[i].col)));
 		}
 	}
-	return score;
+	return 1 + score;
 }
 
 
