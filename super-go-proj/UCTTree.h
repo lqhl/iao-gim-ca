@@ -80,7 +80,7 @@ public:
 		if (UctPatterns::Line(p) == 3)
 			node->updateRave(RATIO * 15, blackMove ? 1.0 : 0.0);
 		if (UctPatterns::Line(p) == 1)
-			node->updateRave(RATIO * 15, blackMove ? 0.0 : 1.0);
+			node->updateRave(RATIO * 30, blackMove ? 0.0 : 1.0);
 		if (UctPatterns::matchAny(board, p))
 			node->updateRave(RATIO * 11.5, blackMove ? 1.0 : 0.0);
 		if (UctPatterns::match2BadKogeima(board, p))
