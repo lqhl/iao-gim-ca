@@ -409,7 +409,7 @@ double GoBook::evaluate(const GoBoard &board, SgBlackWhite color, SgPoint point)
 			score += log10(double(scoreFunction(local[i].row, local[i].col)));
 		}
 	}
-	return 1 + score;
+	return score;
 }
 
 
