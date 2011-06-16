@@ -41,7 +41,7 @@ void testGoUctBoard() {
 }
 
 int main() {
-	return pk_main();
+	 return pk_main();
 
 	
 	// !!! IMPORTANT
