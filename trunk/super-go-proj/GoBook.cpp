@@ -202,8 +202,6 @@ GoBook::GoBook() {
 		GoBook::localPattern temp;
 		fin2 >> temp.row;
 		fin2 >> temp.col;
-		poco_assert(temp.row < 20);
-		poco_assert(temp.col < 20);
 		//cerr << temp.row << " " << temp.col << endl;
 		int Srow = 0;
 		int Scol = 0;
@@ -328,7 +326,6 @@ GoBook::GoBook() {
 			}
 			cerr << endl;
 		}
-
 
 	}
 	cerr << local.size() << endl;
@@ -545,23 +542,38 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 }
 
 
-inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBook::localPattern pattern) {
+inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBook::localPattern pattern, bool flag) {
 	int patternRow = SgPointUtil::Row(pattern.strategy) - 1;
 	int patternCol = SgPointUtil::Col(pattern.strategy) - 1;
+	
+	if(flag)
+		cerr << patternRow << " " << patternCol << endl;
+	
 	int row = SgPointUtil::Row(point);
 	int col = SgPointUtil::Col(point);
+
+	if(flag)
+		cerr << row << " " << col << endl;
+
 	SgBlackWhite myColor = color;
 	SgBlackWhite yourColor = (color == SG_BLACK ? SG_WHITE:SG_BLACK);
 
 	for(int i = 0; i < pattern.row; ++i) {
 		for(int j = 0; j < pattern.col; ++j) {
+			if(flag)
+				cerr << "Matching " << i << " " << j << endl;
 			int colOffset = j - patternCol;
-			int rowOffset = i - patternRow;
+			int rowOffset = patternRow - i;
+			if(flag)
+				cerr << "Offset " << rowOffset << " " << colOffset << endl;
+
 			switch(pattern.pattern[i][j]) {
 				case '?': {
 					break;
 				}
 				case '.': {
+					if(flag)
+						cerr << "." << endl;
 					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
 						return false;
 					SgPoint testPtDot = SgPointUtil::Pt(col+colOffset, row+rowOffset);
@@ -570,6 +582,8 @@ inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBoo
 					break;
 				}
 				case 'X': {
+					if(flag)
+						cerr << "X" << endl;
 					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
 						return false;
 					SgPoint testPtBigX = SgPointUtil::Pt(col+colOffset, row+rowOffset);
@@ -578,6 +592,8 @@ inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBoo
 					break;
 				}
 				case 'O': {
+					if(flag)
+						cerr << "O" << endl;
 					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
 						return false;
 					SgPoint testPtBigO = SgPointUtil::Pt(col+colOffset, row+rowOffset);
@@ -586,6 +602,8 @@ inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBoo
 					break;
 				}
 				case 'x': {
+					if(flag)
+						cerr << "x" << endl;
 					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
 						return false;
 					SgPoint testPtX = SgPointUtil::Pt(col+colOffset, row+rowOffset);
@@ -594,6 +612,8 @@ inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBoo
 					break;
 				}
 				case 'o': {
+					if(flag)
+						cerr << "o" << endl;
 					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
 						return false;
 					SgPoint testPtO = SgPointUtil::Pt(col+colOffset, row+rowOffset);
@@ -602,11 +622,15 @@ inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBoo
 					break;
 				}
 				case '|': {
+					if(flag)
+						cerr << "|" << endl;
 					if(col + colOffset > 0 && col + colOffset <= 13)
 						return false;
 					break;
 				}
 				case '-': {
+					if(flag)
+						cerr << "-" << endl;
 					if(row + rowOffset > 0 && row + rowOffset <= 13)
 						return false;
 					break;
@@ -637,9 +661,9 @@ inline int scoreFunction(int row, int col) {
 double GoBook::evaluate(const GoBoard &board, SgBlackWhite color, SgPoint point) {
 	double score = 0.0;
 	for(int i = 0; i < local.size(); ++i) {
-		if(match(board, color, point, local[i])) {
-			//cerr << "Evaluation changed!" << endl;
-			score += log(double(scoreFunction(local[i].row, local[i].col)));
+		if(match(board, color, point, local[i], false)) {
+			cerr << "Success!" << endl;
+			score += log10(double(scoreFunction(local[i].row, local[i].col)));
 		}
 	}
 	return score;
