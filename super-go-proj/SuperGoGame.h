@@ -171,14 +171,16 @@ public:
 		}
 		poco_assert(black + white == board->Size() * board->Size() * 2);
 
-		storeRecentResult((black - white) / 2.0);
+		if (useDynamicKomi) storeRecentResult((black - white) / 2.0);
 		return (black - white) / 2.0;
 	}
 
 	vector<VALUE> result;
 	int resultHead;
 	VALUE totalResult;
+	RWLock komiLock;
 	void storeRecentResult(VALUE res) {
+		komiLock.writeLock();
 		if (result.size() < 100) {
 			result.push_back(res);
 			totalResult += res;
@@ -187,19 +189,20 @@ public:
 			totalResult += -result[resultHead] + res;
 			result[resultHead] = res;
 			resultHead = (resultHead + 1) % result.size();
-		}
-	}
-
-	int komiCount;
-	VALUE cachedKomi;
-	VALUE getKomi() {
-		if (!useDynamicKomi) return komi;
-		else {
 			if (++komiCount % 5000 == 0) {
 				vector<VALUE> sorted(result);
 				sort(sorted.begin(), sorted.end());
 				cachedKomi = sorted[result.size() / 2];
 			}
+		}
+		komiLock.unlock();
+	}
+
+	int komiCount;
+	volatile VALUE cachedKomi;
+	VALUE getKomi() {
+		if (!useDynamicKomi) return komi;
+		else {
 			return cachedKomi * dyanmicKomiCoefficient;
 		}
 	}
