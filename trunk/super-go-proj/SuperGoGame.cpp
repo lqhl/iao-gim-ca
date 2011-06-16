@@ -35,6 +35,9 @@ SuperGoGame::SuperGoGame() :
 
 	patternWeight = Util::getDouble("PatternWeight");
 
+	endGameThreshold = Util::getInt("EndGameThreshold");
+
+	endGameLargeWinBonus = Util::getDouble("EndGameLargeWinBonus");
 	treeLock = new RWLock();
 
 	searchTime = timeLimit - 500;
@@ -74,7 +77,11 @@ SgPoint SuperGoGame::genMoveUCT() {
 	if (useBias) next = workers[0]->selectChildrenMEANBiased(tree, tree->rootNode());
 	else next = workers[0]->selectChildrenMEAN(tree, tree->rootNode());
 	if (Util::SearchDebugEnabled()) {
+
 		UCTNode* n = tree->rootNode();
+		if (inEndGame()) {
+			fprintf(Util::LogFile(), "In End Game Phase\n");
+		}
 		fprintf(Util::LogFile(), "children of root (%d):\n", n->children.size());
 		for(vector<UCTNode*>::iterator it = n->children.begin(); it != n->children.end(); ++it) {
 			fprintf(Util::LogFile(), "\t");

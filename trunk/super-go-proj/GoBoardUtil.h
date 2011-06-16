@@ -29,13 +29,13 @@ template<typename BOARD>
 inline void getGoNeighbors(BOARD& board, SgPoint p, SgArrayList<SgPoint, 4>& nb) {
 	int r = Row(p), c = Col(p);
 	if (r > 1)
-		nb.PushBack(p - SG_NS);
+		nb.PushBack(Pt(c, r-1));
 	if (r < board.Size())
-		nb.PushBack(p + SG_NS);
+		nb.PushBack(Pt(c, r+1));
 	if (c > 1)
-		nb.PushBack(p - SG_WE);
+		nb.PushBack(Pt(c-1, r));
 	if (c < board.Size())
-		nb.PushBack(p + SG_WE);
+		nb.PushBack(Pt(c+1, r));
 }
 
 template<typename BOARD>
