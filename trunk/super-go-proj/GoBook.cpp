@@ -342,11 +342,11 @@ inline double ambient(SgPoint pt, const GoBoard& board) {
 			if(i != 0 && j != 0) {
 				SgPoint test = SgPointUtil::Pt(col+j, row+i);
 				if(board.GetColor(test) == SG_BLACK) {
-					score += 0.125;
+					score += 0.12;
 				}
 				else {
 					if(board.GetColor(test) == SG_WHITE) {
-						score -= 0.125;
+						score -= 0.12;
 					}
 				}
 			}
@@ -409,17 +409,72 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 	Random rand;
 
 	SgPoint leftLow = SgPointUtil::Pt(i, i);
-	if(board.IsEmpty(leftLow))
-		return leftLow;
+	if(board.IsEmpty(leftLow)) {
+		double s = ambient(leftLow, board);
+		if((s <= 0.0 && color == SG_BLACK) || (s >= 0.0 && color == SG_WHITE))
+			return leftLow;
+		else {
+			double r = rand.nextDouble();
+			if(color = SG_WHITE) {
+				s = 0.0 - s;
+			}
+			if(r < s) {
+				return leftLow;
+			}
+		}
+	}
+
+
 	SgPoint leftUpper = SgPointUtil::Pt(i, j);
-	if(board.IsEmpty(leftUpper))
-		return leftUpper;
+	if(board.IsEmpty(leftUpper)) {
+		double s = ambient(leftUpper, board);
+		if((s <= 0.0 && color == SG_BLACK) || (s >= 0.0 && color == SG_WHITE))
+			return leftUpper;
+		else {
+			double r = rand.nextDouble();
+			if(color = SG_WHITE) {
+				s = 0.0 - s;
+			}
+			if(r < s) {
+				return leftUpper;
+			}
+		}
+	}
+
+
 	SgPoint rightLow = SgPointUtil::Pt(j, i);
-	if(board.IsEmpty(rightLow))
-		return rightLow;
+	if(board.IsEmpty(rightLow)) {
+		double s = ambient(rightLow, board);
+		if((s <= 0.0 && color == SG_BLACK) || (s >= 0.0 && color == SG_WHITE))
+			return rightLow;
+		else {
+			double r = rand.nextDouble();
+			if(color = SG_WHITE) {
+				s = 0.0 - s;
+			}
+			if(r < s) {
+				return rightLow;
+			}
+		}
+	}
+
+
 	SgPoint rightUpper = SgPointUtil::Pt(j, j);
-	if(board.IsEmpty(rightUpper))
-		return rightUpper;
+	if(board.IsEmpty(rightUpper)) {
+		double s = ambient(rightUpper, board);
+		if((s <= 0.0 && color == SG_BLACK) || (s >= 0.0 && color == SG_WHITE))
+			return rightUpper;
+		else {
+			double r = rand.nextDouble();
+			if(color = SG_WHITE) {
+				s = 0.0 - s;
+			}
+			if(r < s) {
+				return rightUpper;
+			}
+		}
+	}
+
 
 	int mid = 7;
 	SgPoint leftMid = SgPointUtil::Pt(i, mid);
@@ -582,7 +637,7 @@ double GoBook::evaluate(const GoBoard &board, SgBlackWhite color, SgPoint point)
 	for(int i = 0; i < local.size(); ++i) {
 		if(match(board, color, point, local[i])) {
 			//cerr << "Evaluation changed!" << endl;
-			score += log10(double(scoreFunction(local[i].row, local[i].col)));
+			score += log(double(scoreFunction(local[i].row, local[i].col)));
 		}
 	}
 	return score;
