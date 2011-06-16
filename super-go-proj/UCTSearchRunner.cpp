@@ -473,7 +473,8 @@ void UCTSearchRunner::getBiasedCoefficient(GoBoard* board, UCTTree* tree, UCTNod
 		double e = 1.0;
 		if (game->book != NULL && game->patternWeight > 0) {
 			e = 1 + game->patternWeight * game->book->evaluate(*board, board->ToPlay(), move);
-			fprintf(Util::LogFile(), "pattern evaluation = %.2f\n", e);
+			if (e > 1)
+				fprintf(Util::LogFile(), "pattern evaluation = %.2f\n", e);
 		}
 		b *= e;
 		bias.push_back(b);
