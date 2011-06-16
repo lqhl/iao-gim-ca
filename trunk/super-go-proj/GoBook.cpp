@@ -3,14 +3,16 @@
 #include "GoBoard.h"
 #include "SgBlackWhite.h"
 #include "SgMove.h"
+#include "Poco/Random.h"
 #include <fstream>
 #include <string>
 #include <vector>
 #include <cmath>
 
 using namespace std;
+using Poco::Random;
 
-SgPoint point(int pos, char ch) {
+inline SgPoint point(int pos, char ch) {
 	int col = 0;
 	switch(ch) {
 		case 'A':
@@ -55,8 +57,6 @@ SgPoint point(int pos, char ch) {
 	}
 	return SgPointUtil::Pt(col, pos);
 }
-
-
 
 
 GoBook::GoBook() {
@@ -195,7 +195,9 @@ GoBook::GoBook() {
 	cerr << GoBook::capacity << endl;
 	cerr << moves.size() << endl;
 
-	ifstream fin2("pattern.db");
+
+	bool print = false;
+	ifstream fin2("patternPlus.db");
 	while(! fin2.eof() ) {
 		GoBook::localPattern temp;
 		fin2 >> temp.row;
@@ -215,6 +217,16 @@ GoBook::GoBook() {
 		}
 		temp.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp);
+
+		if(print) {
+			for(int i = 0; i < temp.row; ++i) {
+				for(int j = 0; j < temp.col; ++j) {
+					cerr << temp.pattern[i][j];
+				}
+				cerr << endl;
+			}
+			cerr << endl;
+		}
 
 		// Start transformation
 		// 1. Rotate 90 anticlockwise
@@ -240,6 +252,19 @@ GoBook::GoBook() {
 		temp90.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp90);
 
+		if(print) {
+			for(int i = 0; i < temp90.row; ++i) {
+				for(int j = 0; j < temp90.col; ++j) {
+					cerr << temp90.pattern[i][j];
+				}
+				cerr << endl;
+			}
+			cerr << endl;
+		}
+
+
+
+
 		// 2. Rotate 180 anticlockwise
 		GoBook::localPattern temp180;
 		temp180.row = temp.row;
@@ -255,6 +280,19 @@ GoBook::GoBook() {
 		}
 		temp180.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp180);
+
+		if(print) {
+			for(int i = 0; i < temp180.row; ++i) {
+				for(int j = 0; j < temp180.col; ++j) {
+					cerr << temp180.pattern[i][j];
+				}
+				cerr << endl;
+			}
+			cerr << endl;
+		}
+
+
+
 
 		// 3. Rotate 270 anticlockwise
 		GoBook::localPattern temp270;
@@ -279,13 +317,51 @@ GoBook::GoBook() {
 		temp270.strategy = SgPointUtil::Pt(Scol, Srow);
 		GoBook::local.push_back(temp270);
 
+		if(print) {
+			for(int i = 0; i < temp270.row; ++i) {
+				for(int j = 0; j < temp270.col; ++j) {
+					cerr << temp270.pattern[i][j];
+				}
+				cerr << endl;
+			}
+			cerr << endl;
+		}
+
+
 	}
 	cerr << local.size() << endl;
 	fin2.close();
 }
 
+inline double ambient(SgPoint pt, const GoBoard& board) {
+	double score = 0.0;
+	int row = SgPointUtil::Row(pt);
+	int col = SgPointUtil::Col(pt);
+	for(int i = -2; i <= 2; ++i) {
+		for(int j = -2; j <= 2; ++j) {
+			if(i != 0 && j != 0) {
+				SgPoint test = SgPointUtil::Pt(col+j, row+i);
+				if(board.GetColor(test) == SG_BLACK) {
+					score += 0.125;
+				}
+				else {
+					if(board.GetColor(test) == SG_WHITE) {
+						score -= 0.125;
+					}
+				}
+			}
+		}
+	}
+	return score;
+}
+
+
+
 
 SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
+	
+	
+	// 1. Match the Fuego Book
 	int cnt =  0;
 	for(int i = 1; i < 13; ++i) {
 		for(int j = 1; j < 13; ++j) {
@@ -295,7 +371,6 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 		}
 	}
 	//cerr << "Count: " << cnt << endl;
-
 
 	for(int i = 0; i < GoBook::capacity; ++i) {
 		if(GoBook::patterns[i].size() != cnt)
@@ -322,12 +397,93 @@ SgPoint GoBook::matchBook(const GoBoard& board, SgBlackWhite color) {
 		}
 		if(success) {
 			if(board.IsEmpty(moves[i])) {
-				//cerr << "Success" << endl;
-				//cerr << SgPointUtil::Row(moves[i]) << " " << SgPointUtil::Col(moves[i]) << endl;
 				return moves[i];
 			}
 		}
 	}
+
+	// 2. Human matching
+	int i = 4;
+	int j = 10;
+
+	Random rand;
+
+	SgPoint leftLow = SgPointUtil::Pt(i, i);
+	if(board.IsEmpty(leftLow))
+		return leftLow;
+	SgPoint leftUpper = SgPointUtil::Pt(i, j);
+	if(board.IsEmpty(leftUpper))
+		return leftUpper;
+	SgPoint rightLow = SgPointUtil::Pt(j, i);
+	if(board.IsEmpty(rightLow))
+		return rightLow;
+	SgPoint rightUpper = SgPointUtil::Pt(j, j);
+	if(board.IsEmpty(rightUpper))
+		return rightUpper;
+
+	int mid = 7;
+	SgPoint leftMid = SgPointUtil::Pt(i, mid);
+	if(board.IsEmpty(leftMid)) {
+		double s = ambient(leftMid, board);
+		if(color == SG_BLACK) {
+			if(rand.nextDouble() < s)
+				return leftMid;
+		}
+		else {
+			if(color == SG_WHITE) {
+				s = 0.0 - s;
+				if(rand.nextDouble() < s)
+					return leftMid;
+			}
+		}
+	}
+	SgPoint upperMid = SgPointUtil::Pt(mid, j);
+	if(board.IsEmpty(upperMid)) {
+		double s = ambient(upperMid, board);
+		if(color == SG_BLACK) {
+			if(rand.nextDouble() < s)
+				return upperMid;
+		}
+		else {
+			if(color == SG_WHITE) {
+				s = 0.0 - s;
+				if(rand.nextDouble() < s)
+					return upperMid;
+			}
+		}
+	}
+	SgPoint rightMid = SgPointUtil::Pt(j, mid);
+	if(board.IsEmpty(rightMid)) {
+		double s = ambient(rightMid, board);
+		if(color == SG_BLACK) {
+			if(rand.nextDouble() < s)
+				return rightMid;
+		}
+		else {
+			if(color == SG_WHITE) {
+				s = 0.0 - s;
+				if(rand.nextDouble() < s)
+					return rightMid;
+			}
+		}
+	}
+	SgPoint lowerMid = SgPointUtil::Pt(mid, i);
+	if(board.IsEmpty(lowerMid)) {
+		double s = ambient(lowerMid, board);
+		if(color == SG_BLACK) {
+			if(rand.nextDouble() < s)
+				return lowerMid;
+		}
+		else {
+			if(color == SG_WHITE) {
+				s = 0.0 - s;
+				if(rand.nextDouble() < s)
+					return lowerMid;
+			}
+		}
+	}
+
+
 	return SG_NULLMOVE;
 }
 
@@ -344,40 +500,60 @@ inline bool match(const GoBoard& board, SgBlackWhite color, SgPoint point, GoBoo
 		for(int j = 0; j < pattern.col; ++j) {
 			int colOffset = j - patternCol;
 			int rowOffset = i - patternRow;
-			if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
-				return false;
-			SgPoint testPt = SgPointUtil::Pt(col+colOffset, row+rowOffset);
 			switch(pattern.pattern[i][j]) {
-				case '?':
+				case '?': {
 					break;
-				case '.':
-					if(!board.IsEmpty(testPt))
+				}
+				case '.': {
+					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
+						return false;
+					SgPoint testPtDot = SgPointUtil::Pt(col+colOffset, row+rowOffset);
+					if(!board.IsEmpty(testPtDot))
 						return false;
 					break;
-				case 'X':
-					if(board.GetColor(testPt) != yourColor)
+				}
+				case 'X': {
+					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
+						return false;
+					SgPoint testPtBigX = SgPointUtil::Pt(col+colOffset, row+rowOffset);
+					if(board.GetColor(testPtBigX) != yourColor)
 						return false;
 					break;
-				case 'O':
-					if(board.GetColor(testPt) != myColor)
+				}
+				case 'O': {
+					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
+						return false;
+					SgPoint testPtBigO = SgPointUtil::Pt(col+colOffset, row+rowOffset);
+					if(board.GetColor(testPtBigO) != myColor)
 						return false;
 					break;
-				case 'x':
-					if(board.GetColor(testPt) != yourColor && !board.IsEmpty(testPt))
+				}
+				case 'x': {
+					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
+						return false;
+					SgPoint testPtX = SgPointUtil::Pt(col+colOffset, row+rowOffset);
+					if(board.GetColor(testPtX) != yourColor && !board.IsEmpty(testPtX))
 						return false;
 					break;
-				case 'o':
-					if(board.GetColor(testPt) != myColor && !board.IsEmpty(testPt))
+				}
+				case 'o': {
+					if(col + colOffset <= 0 || col + colOffset > 13 || row + rowOffset <= 0 || row + rowOffset > 13)
+						return false;
+					SgPoint testPtO = SgPointUtil::Pt(col+colOffset, row+rowOffset);
+					if(board.GetColor(testPtO) != myColor && !board.IsEmpty(testPtO))
 						return false;
 					break;
-				case '|':
-					if(SgPointUtil::Col(testPt) != 1 && SgPointUtil::Col(testPt) != 13) 
+				}
+				case '|': {
+					if(col + colOffset > 0 && col + colOffset <= 13)
 						return false;
 					break;
-				case '-':
-					if(SgPointUtil::Row(testPt) != 1 && SgPointUtil::Row(testPt) != 13)
+				}
+				case '-': {
+					if(row + rowOffset > 0 && row + rowOffset <= 13)
 						return false;
 					break;
+				}
 				case '+':
 					// ignore.
 					break;
@@ -397,7 +573,7 @@ inline int scoreFunction(int row, int col) {
 		if(row <= 10 && col <= 10) {
 			return 4;
 		}
-		else return 6;
+		else return 5;
 	}
 }
 
