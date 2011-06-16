@@ -76,6 +76,10 @@ public:
 
 	double patternWeight;
 
+	int endGameThreshold;
+
+	double endGameLargeWinBonus;
+
 	SuperGoGame();
 
 	void setPlayer(int player);
@@ -98,9 +102,12 @@ public:
 		//if (Util::UctDebugEnabled()) {
 		//	board->printBoard(cerr);
 		//}
+		int point = 0;
 		for (BOARD::Iterator it(*board); it; ++it) {
+			++point;
 			SgBoardColor c = board->GetColor(*it);
 			poco_assert(c != SG_BORDER);
+			poco_assert(c == SG_WHITE || c == SG_BLACK || c == SG_EMPTY);
 			if (c == SG_BLACK)
 				black += 2;
 			else if (c == SG_WHITE)
@@ -121,7 +128,7 @@ public:
 			while (k > 0) {
 				SgPoint cur = stack[--k];
 				nb.Clear();
-				getGoNeighbors(*board, *it, nb);
+				getGoNeighbors(*board, cur, nb);
 				for (SgArrayList<SgPoint, 4>::Iterator j(nb); j; ++j) {
 					if (board->GetColor(*j) == SG_BLACK)
 						blackNb = true;
@@ -139,6 +146,7 @@ public:
 
 			}
 
+			poco_assert(blackNb || whiteNb);
 			if (blackNb)
 				black += num;
 			if (!whiteNb)
@@ -148,11 +156,14 @@ public:
 			if (!blackNb)
 				white += num;
 		}
+		poco_assert(point == board->Size() * board->Size());
 		if (Util::UctDebugEnabled() && false) {
 			fprintf(Util::LogFile(),
 					"simulation result: %.1f, black = %.1f, white = %.1f\n",
 					(black - white) / 2.0, black / 2.0, white / 2.0);
 		}
+		board->printBoard(cerr);
+		poco_assert(black + white == board->Size() * board->Size() * 2);
 		return (black - white) / 2.0;
 	}
 
@@ -188,8 +199,13 @@ public:
 	}
 
 	COUNT resultWeight(double res) {
+		double c = inEndGame() ? endGameLargeWinBonus : largeWinBonus;
 		res -= komi;
-		return 1.0 + (res > 0 ? res : -res) * largeWinBonus;
+		return 1.0 + (res > 0 ? res : -res) * c;
+	}
+
+	bool inEndGame() {
+		return tree->rootNode()->children.size() < endGameThreshold;
 	}
 };
 

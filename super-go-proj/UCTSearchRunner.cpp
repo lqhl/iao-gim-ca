@@ -230,6 +230,8 @@ GoPlayerMove UCTSearchRunner::generateMove(GoUctBoard* board,
 
 	SgPoint mv = SG_NULLMOVE;
 
+	bool endGame = game->inEndGame();
+
 	SgPoint lastMove = board->GetLastMove();
 	if (mv == SG_NULLMOVE && !SgIsSpecialMove(lastMove) // skip if Pass or Null
 			&& !board->IsEmpty(lastMove) // skip if move was suicide
