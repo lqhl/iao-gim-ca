@@ -45,6 +45,7 @@ SuperGoGame::SuperGoGame() :
 	totalResult = 0.0;
 	komiCount = 0;
 	cachedKomi = komi;
+	dyanmicKomiCoefficient = Util::getDouble("DynamicKomiCoefficient");
 
 	treeLock = new RWLock();
 
@@ -91,7 +92,7 @@ SgPoint SuperGoGame::genMoveUCT() {
 			fprintf(Util::LogFile(), "In End Game Phase\n");
 		}
 		if (useDynamicKomi) {
-			fprintf(Util::LogFile(), "Dynamic Komi = %.2f\n", getKomi());
+			fprintf(Util::LogFile(), "Dynamic Komi = %.2f\n", getKomi() / dyanmicKomiCoefficient);
 		}
 		fprintf(Util::LogFile(), "children of root (%d):\n", n->children.size());
 		for(vector<UCTNode*>::iterator it = n->children.begin(); it != n->children.end(); ++it) {

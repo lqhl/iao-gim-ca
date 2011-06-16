@@ -459,15 +459,15 @@ void UCTSearchRunner::getBiasedCoefficient(GoBoard* board, UCTTree* tree, UCTNod
 		SgPoint move = (*it)->move;
 		if (nakade[move]) b *= 2;
 		if (atariDefense[move]) {
-			b *= 1.2;
+			b *= 2;
 			fprintf(Util::LogFile(), "Atari Defense Bias Added\n");
 		}
 		if (atariCapture[move]) {
-			b *= 1.5;
+			b *= 3;
 			fprintf(Util::LogFile(), "Atari Capture Bias Added\n");
 		}
-		if (lowLib[move]) b *= 1.1;
-		if (UctPatterns::Line(move) == 1) b *= 0.9;
+		if (lowLib[move]) b *= 1.5;
+		if (UctPatterns::Line(move) == 1) b *= 0.8;
 
 		
 		double e = 1.0;

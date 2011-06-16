@@ -331,6 +331,7 @@ GoBook::GoBook() {
 	}
 	cerr << local.size() << endl;
 	fin2.close();
+	cerr << "ok\n" << endl;
 }
 
 inline double ambient(SgPoint pt, const GoBoard& board) {

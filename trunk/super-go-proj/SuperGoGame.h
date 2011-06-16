@@ -82,6 +82,8 @@ public:
 
 	bool useDynamicKomi;
 
+	double dyanmicKomiCoefficient;
+
 	SuperGoGame();
 
 	void setPlayer(int player);
@@ -198,7 +200,7 @@ public:
 				sort(sorted.begin(), sorted.end());
 				cachedKomi = sorted[result.size() / 2];
 			}
-			return cachedKomi;
+			return cachedKomi * dyanmicKomiCoefficient;
 		}
 	}
 
