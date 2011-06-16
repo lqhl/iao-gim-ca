@@ -494,17 +494,17 @@ UCTNode* UCTSearchRunner::selectChildrenMEANBiased(UCTTree* tree, UCTNode* node)
 	for (vector<UCTNode*>::iterator it = v.begin(); it != v.end(); ++it) {
 		UCTNode& m = *(*it);
 		if (!board.IsEmpty(m.move)) continue;
-		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
-			// the player will lose
-			if (m.state == m.level % 2)
-				continue;
-			// he wins
-			else {
-				node->state = (BoardState) (node->level % 2);
-				return &m;
-			}
-
-		}
+		//		if (m.state == BLACK_WIN || m.state == WHITE_WIN) {
+		//			// the player will lose
+		//			if (m.state == m.level % 2)
+		//				continue;
+		//			// he wins
+		//			else {
+		//				node->state = (BoardState) (node->level % 2);
+		//				return &m;
+		//			}
+		//
+		//		}
 
 		double visitValue = blackMove ? m.visitValue : 1 - m.visitValue;
 		// add the bias

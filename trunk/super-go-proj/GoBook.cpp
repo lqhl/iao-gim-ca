@@ -202,6 +202,8 @@ GoBook::GoBook() {
 		GoBook::localPattern temp;
 		fin2 >> temp.row;
 		fin2 >> temp.col;
+		poco_assert(temp.row < 20);
+		poco_assert(temp.col < 20);
 		//cerr << temp.row << " " << temp.col << endl;
 		int Srow = 0;
 		int Scol = 0;
@@ -331,7 +333,6 @@ GoBook::GoBook() {
 	}
 	cerr << local.size() << endl;
 	fin2.close();
-	cerr << "ok\n" << endl;
 }
 
 inline double ambient(SgPoint pt, const GoBoard& board) {

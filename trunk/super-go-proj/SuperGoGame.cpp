@@ -71,6 +71,7 @@ void SuperGoGame::execute(SgPoint move, SgBlackWhite color) {
 static int numStep = 0;
 
 SgPoint SuperGoGame::genMoveUCT() {
+	cerr << "start search\n";
 	if (numThread == 1) {
 		workers[0]->run();
 	} else {
@@ -81,7 +82,7 @@ SgPoint SuperGoGame::genMoveUCT() {
 			workers[i]->thread.join();
 		}
 	}
-
+	cerr << "search complete\n";
 	UCTNode* next = NULL;
 	if (useBias) next = workers[0]->selectChildrenMEANBiased(tree, tree->rootNode());
 	else next = workers[0]->selectChildrenMEAN(tree, tree->rootNode());
@@ -120,6 +121,7 @@ SgPoint SuperGoGame::genMoveUCT() {
 SgPoint SuperGoGame::genMove() {
 	
 	if (openPhase && useBook) {
+		cerr << "use book\n";
 		SgPoint p = book->matchBook(board, board.ToPlay());
 		if (p != SG_NULLMOVE) {
 			fprintf(Util::LogFile(), "** BOOK ** (i = %d) (%d %d)\n", numStep, Row(p), Col(p));
@@ -142,4 +144,6 @@ void SuperGoGame::init() {
 	tree = new UCTTree(this, numNode);
 
 	openPhase = true;
+
+	cerr << "game init complete\n";
 }
