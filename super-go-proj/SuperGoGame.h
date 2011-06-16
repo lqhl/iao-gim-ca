@@ -184,7 +184,7 @@ public:
 	VALUE totalResult;
 	RWLock* komiLock;
 	void storeRecentResult(VALUE res) {
-		if (result.size() < 100) {
+		if (result.size() < 8000) {
 			result.push_back(res);
 			totalResult += res;
 		}
@@ -192,7 +192,7 @@ public:
 			totalResult += -result[resultHead] + res;
 			result[resultHead] = res;
 			resultHead = (resultHead + 1) % result.size();
-			if (++komiCount % 5000 == 0) {
+			if (++komiCount % 8000 == 0) {
 				vector<VALUE> sorted(result);
 				sort(sorted.begin(), sorted.end());
 				cachedKomi = (float) sorted[result.size() / 2];
