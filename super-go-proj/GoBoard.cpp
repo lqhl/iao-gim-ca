@@ -835,8 +835,21 @@ void GoBoard::RestoreSnapshot()
 }
 
 void GoBoard::printBoard(ostream& out) {
-	for (int i = 1; i <= m_size; i++) {
+	/*for (int i = 1; i <= m_size; i++) {
 		for (int j = 1; j <= m_size; j++) {
+			char ch;
+			if (IsEmpty(SgPointUtil::Pt(j, i)))
+				ch = '.';
+			else
+				ch = SgBW(GetColor(SgPointUtil::Pt(j, i)));
+			out << ch;
+		}
+		out << endl;
+	}
+	out << endl;*/
+
+	for (int i = m_size; i >= 1; i--) {
+		for (int j = 1; j <= m_size; ++j) {
 			char ch;
 			if (IsEmpty(SgPointUtil::Pt(j, i)))
 				ch = '.';

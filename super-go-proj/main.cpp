@@ -40,10 +40,21 @@ void testGoUctBoard() {
 	uctBoard->printAll(out);
 }
 
+
+void testPatternMatch() {
+	GoBoard* board = new GoBoard(13);
+	GoBook* book = new GoBook();
+	board->Play(SgPointUtil::Pt(10, 10), SG_BLACK);
+	board->Play(SgPointUtil::Pt(11, 8), SG_WHITE);
+	board->printBoard(cerr);
+	book->evaluate(*board, SG_BLACK, SgPointUtil::Pt(11, 6));
+}
+
 int main() {
 	 return pk_main();
 
-	
+	//testPatternMatch();
+	//system("pause");
 	// !!! IMPORTANT
 	remove("super-go-log.txt");
 	Util::init("super-go.config");
