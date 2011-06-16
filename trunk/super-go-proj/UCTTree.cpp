@@ -76,8 +76,8 @@ void UCTTree::updateStat(vector<SgPoint>& seqIn, vector<SgPoint>& seqOut, COUNT 
 
 
 	VALUE delta = 0.5;
-	if (result > game->komi) delta = 1;
-	else if (result < game->komi) delta = 0;
+	if (result > game->getKomi()) delta = 1;
+	else if (result < game->getKomi()) delta = 0;
 
 	COUNT weight = game->resultWeight(result);
 	// from root go down
@@ -235,8 +235,8 @@ bool UCTTree::tryExpand(GoBoard* board, UCTNode* node, SuperGoGame* game, BoardS
 
 	if (children.empty()) {
 		COUNT res = game->evaluate(board);
-		if (res > game->komi) state = BLACK_WIN;
-		else if (res == game->komi) state = DRAW;
+		if (res > game->getKomi()) state = BLACK_WIN;
+		else if (res == game->getKomi()) state = DRAW;
 		else state = WHITE_WIN;
 
 		return true;

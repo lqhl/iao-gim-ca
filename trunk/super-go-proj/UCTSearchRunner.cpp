@@ -80,11 +80,11 @@ void UCTSearchRunner::searchBoard(int timeLimit, int numPlayOut,
 			} else {
 				// TODO hack
 				if (state == BLACK_WIN)
-					res = game->komi + DEFAULT_WIN;
+					res = game->getKomi() + DEFAULT_WIN;
 				else if (state == WHITE_WIN)
-					res = game->komi - DEFAULT_WIN;
+					res = game->getKomi() - DEFAULT_WIN;
 				else
-					res = game->komi;
+					res = game->getKomi();
 			}
 
 			// update the tree stat
@@ -460,11 +460,11 @@ void UCTSearchRunner::getBiasedCoefficient(GoBoard* board, UCTTree* tree, UCTNod
 		if (nakade[move]) b *= 2;
 		if (atariDefense[move]) {
 			b *= 1.2;
-			fprintf(Util::LogFile(), "Atari Defense Bias Added");
+			fprintf(Util::LogFile(), "Atari Defense Bias Added\n");
 		}
 		if (atariCapture[move]) {
 			b *= 1.5;
-			fprintf(Util::LogFile(), "Atari Capture Bias Added");
+			fprintf(Util::LogFile(), "Atari Capture Bias Added\n");
 		}
 		if (lowLib[move]) b *= 1.1;
 		if (UctPatterns::Line(move) == 1) b *= 0.9;

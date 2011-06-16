@@ -38,6 +38,14 @@ SuperGoGame::SuperGoGame() :
 	endGameThreshold = Util::getInt("EndGameThreshold");
 
 	endGameLargeWinBonus = Util::getDouble("EndGameLargeWinBonus");
+
+	useDynamicKomi = Util::getBoolean("UseDynamicKomi");
+
+	resultHead = 0;
+	totalResult = 0.0;
+	komiCount = 0;
+	cachedKomi = 0.0;
+
 	treeLock = new RWLock();
 
 	searchTime = timeLimit - 500;
@@ -81,6 +89,9 @@ SgPoint SuperGoGame::genMoveUCT() {
 		UCTNode* n = tree->rootNode();
 		if (inEndGame()) {
 			fprintf(Util::LogFile(), "In End Game Phase\n");
+		}
+		if (useDynamicKomi) {
+			fprintf(Util::LogFile(), "Dynamic Komi = %.2f\n", getKomi());
 		}
 		fprintf(Util::LogFile(), "children of root (%d):\n", n->children.size());
 		for(vector<UCTNode*>::iterator it = n->children.begin(); it != n->children.end(); ++it) {
