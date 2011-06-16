@@ -80,6 +80,8 @@ public:
 
 	double endGameLargeWinBonus;
 
+	bool useDynamicKomi;
+
 	SuperGoGame();
 
 	void setPlayer(int player);
@@ -166,15 +168,47 @@ public:
 					(black - white) / 2.0, black / 2.0, white / 2.0);
 		}
 		poco_assert(black + white == board->Size() * board->Size() * 2);
+
+		storeRecentResult((black - white) / 2.0);
 		return (black - white) / 2.0;
 	}
+
+	vector<VALUE> result;
+	int resultHead;
+	VALUE totalResult;
+	void storeRecentResult(VALUE res) {
+		if (result.size() < 100) {
+			result.push_back(res);
+			totalResult += res;
+		}
+		else {
+			totalResult += -result[resultHead] + res;
+			result[resultHead] = res;
+			resultHead = (resultHead + 1) % result.size();
+		}
+	}
+
+	int komiCount;
+	VALUE cachedKomi;
+	VALUE getKomi() {
+		if (!useDynamicKomi) return komi;
+		else {
+			if (++komiCount % 5000 == 0) {
+				vector<VALUE> sorted(result);
+				sort(sorted.begin(), sorted.end());
+				cachedKomi = sorted[result.size() / 2];
+			}
+			return cachedKomi;
+		}
+	}
+
 
 	template<typename BOARD>
 	BoardState evaluateState(BOARD* board) {
 		COUNT res = evaluate(board);
-		if (res > komi)
+		if (res > getKomi())
 			return BLACK_WIN;
-		else if (res < komi)
+		else if (res < getKomi())
 			return WHITE_WIN;
 		else
 			return DRAW;
@@ -202,7 +236,7 @@ public:
 
 	COUNT resultWeight(double res) {
 		double c = inEndGame() ? endGameLargeWinBonus : largeWinBonus;
-		res -= komi;
+		res -= getKomi();
 		return 1.0 + (res > 0 ? res : -res) * c;
 	}
 
