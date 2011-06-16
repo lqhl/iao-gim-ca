@@ -75,7 +75,7 @@ SgPoint SuperGoGame::genMoveUCT() {
 	else next = workers[0]->selectChildrenMEAN(tree, tree->rootNode());
 	if (Util::SearchDebugEnabled()) {
 		UCTNode* n = tree->rootNode();
-		fprintf(Util::LogFile(), "children of root:\n");
+		fprintf(Util::LogFile(), "children of root (%d):\n", n->children.size());
 		for(vector<UCTNode*>::iterator it = n->children.begin(); it != n->children.end(); ++it) {
 			fprintf(Util::LogFile(), "\t");
 			(*it)->print(Util::LogFile());
@@ -100,7 +100,7 @@ SgPoint SuperGoGame::genMoveUCT() {
 
 SgPoint SuperGoGame::genMove() {
 	
-	if (openPhase && book != NULL) {
+	if (openPhase && useBook) {
 		SgPoint p = book->matchBook(board, board.ToPlay());
 		if (p != SG_NULLMOVE) {
 			fprintf(Util::LogFile(), "** BOOK ** (i = %d) (%d %d)\n", numStep, Row(p), Col(p));
@@ -115,8 +115,7 @@ SgPoint SuperGoGame::genMove() {
 
 
 void SuperGoGame::init() {
-	if (useBook)
-		book = new GoBook();
+	book = new GoBook();
 	for (int i = 0; i < numThread; ++i) {
 		workers.push_back(new UCTSearchRunner(this));
 	}

@@ -112,7 +112,7 @@ public:
 
 			SgPoint stack[SG_MAXPOINT];
 			int k = 0;
-			int num = 0;
+			int num = 1;
 			bool whiteNb = false, blackNb = false;
 			marked[*it] = true;
 			stack[k++] = *it;
@@ -121,7 +121,6 @@ public:
 			while (k > 0) {
 				SgPoint cur = stack[--k];
 				nb.Clear();
-				//nb.reserve(4);
 				getGoNeighbors(*board, *it, nb);
 				for (SgArrayList<SgPoint, 4>::Iterator j(nb); j; ++j) {
 					if (board->GetColor(*j) == SG_BLACK)
