@@ -82,7 +82,7 @@ public:
 
 	bool useDynamicKomi;
 
-	double dyanmicKomiCoefficient;
+	double dynamicKomiCoefficient;
 
 	SuperGoGame();
 
@@ -171,16 +171,19 @@ public:
 		}
 		poco_assert(black + white == board->Size() * board->Size() * 2);
 
-		if (useDynamicKomi) storeRecentResult((black - white) / 2.0);
+		if (useDynamicKomi) {
+			komiLock->writeLock();
+			storeRecentResult((black - white) / 2.0);
+			komiLock->unlock();
+		}
 		return (black - white) / 2.0;
 	}
 
 	vector<VALUE> result;
 	int resultHead;
 	VALUE totalResult;
-	RWLock komiLock;
+	RWLock* komiLock;
 	void storeRecentResult(VALUE res) {
-		komiLock.writeLock();
 		if (result.size() < 100) {
 			result.push_back(res);
 			totalResult += res;
@@ -192,18 +195,18 @@ public:
 			if (++komiCount % 5000 == 0) {
 				vector<VALUE> sorted(result);
 				sort(sorted.begin(), sorted.end());
-				cachedKomi = sorted[result.size() / 2];
+				cachedKomi = (float) sorted[result.size() / 2];
 			}
 		}
-		komiLock.unlock();
 	}
 
 	int komiCount;
-	volatile VALUE cachedKomi;
+	float volatile cachedKomi;
 	VALUE getKomi() {
 		if (!useDynamicKomi) return komi;
 		else {
-			return cachedKomi * dyanmicKomiCoefficient;
+			//return komi;
+			return cachedKomi * dynamicKomiCoefficient;
 		}
 	}
 
