@@ -44,7 +44,7 @@ SuperGoGame::SuperGoGame() :
 	resultHead = 0;
 	totalResult = 0.0;
 	komiCount = 0;
-	cachedKomi = 0.0;
+	cachedKomi = komi;
 
 	treeLock = new RWLock();
 
