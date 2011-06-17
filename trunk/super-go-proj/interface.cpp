@@ -236,7 +236,13 @@ gtp_genmove(char *s)
 	if (!gtp_decode_color(s, &color))
 		return gtp_failure("invalid color");
 
-	SgPoint move = game->genMove();
+	SgPoint move;
+	try {
+		move = game->genMove();
+	}
+	catch (...) {
+		move = SG_PASS;
+	}
 	SG_ASSERT_BW(color);
 
 	game->execute(move, color);
